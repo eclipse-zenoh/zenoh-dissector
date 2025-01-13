@@ -59,6 +59,7 @@ static mut UDP_PORT: u32 = 7447;
 static mut TCP_PORT: u32 = 7447;
 static mut CURR_UDP_PORT: u32 = 7447;
 static mut CURR_TCP_PORT: u32 = 7447;
+static mut DISABLE_HEURISTIC_DISSECTOR: bool = false;
 
 #[no_mangle]
 extern "C" fn plugin_register() {
@@ -139,6 +140,16 @@ fn register_zenoh_protocol() -> Result<()> {
             nul_terminated_str("Is Compression")?,
             nul_terminated_str("Is Zenoh message compressed")?,
             &mut IS_COMPRESSION as _,
+        );
+
+        epan_sys::prefs_register_bool_preference(
+            zenoh_module,
+            nul_terminated_str("disable_heuristic_dissector")?,
+            nul_terminated_str("Disable the heuristic dissector")?,
+            nul_terminated_str(
+                "The heuristic dissector tries to decode all TCP and UDP packets as Zenoh messages which could be performance-intensive.",
+            )?,
+            &mut DISABLE_HEURISTIC_DISSECTOR as _,
         );
     }
 
@@ -225,6 +236,14 @@ unsafe extern "C" fn register_handoff() {
 
         log::info!("Zenoh dissector is registered for TCP and UDP at port 7447");
         log::info!("Zenoh heuristic dissector is registered for TCP and UDP");
+        log::info!(
+            "Zenoh heuristic dissector is {}",
+            if DISABLE_HEURISTIC_DISSECTOR {
+                "disabled"
+            } else {
+                "enabled"
+            }
+        );
     });
 }
 
@@ -418,5 +437,9 @@ unsafe extern "C" fn dissect_heur(
     tree: *mut epan_sys::_proto_node,
     data: *mut std::ffi::c_void,
 ) -> bool {
-    try_dissect_main(tvb, pinfo, tree, data).0.is_ok()
+    if DISABLE_HEURISTIC_DISSECTOR {
+        false
+    } else {
+        try_dissect_main(tvb, pinfo, tree, data).0.is_ok()
+    }
 }
