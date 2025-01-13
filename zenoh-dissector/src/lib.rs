@@ -393,39 +393,8 @@ unsafe extern "C" fn dissect_main(
     let (summary, tvb_len) = try_dissect_main(tvb, pinfo, tree, data);
 
     match summary {
-        Ok(packet_summary) => {
-            let summary = format!(
-                "{} → {} {}",
-                (*pinfo).srcport,
-                (*pinfo).destport,
-                packet_summary
-            );
-
-            // Update the info column
-            epan_sys::col_clear((*pinfo).cinfo, epan_sys::COL_INFO as std::ffi::c_int);
-            epan_sys::col_set_str(
-                (*pinfo).cinfo,
-                epan_sys::COL_INFO as _,
-                nul_terminated_str(&summary).unwrap(),
-            );
-        }
-        Err(err) => {
-            log::error!("{err}");
-            let summary = format!(
-                "{} → {} {}",
-                (*pinfo).srcport,
-                (*pinfo).destport,
-                "Failed to decode possibly due to the experimental compression preference.",
-            );
-
-            // Update the info column
-            epan_sys::col_clear((*pinfo).cinfo, epan_sys::COL_INFO as std::ffi::c_int);
-            epan_sys::col_set_str(
-                (*pinfo).cinfo,
-                epan_sys::COL_INFO as _,
-                nul_terminated_str(&summary).unwrap(),
-            );
-        }
+        Ok(packet_summary) => show_summary(pinfo, packet_summary),
+        Err(err) => show_error(pinfo, err),
     }
 
     tvb_len as _
@@ -440,6 +409,46 @@ unsafe extern "C" fn dissect_heur(
     if DISABLE_HEURISTIC_DISSECTOR {
         false
     } else {
-        try_dissect_main(tvb, pinfo, tree, data).0.is_ok()
+        if let Ok(summary) = try_dissect_main(tvb, pinfo, tree, data).0 {
+            show_summary(pinfo, summary);
+            true
+        } else {
+            false
+        }
     }
+}
+
+unsafe fn show_error(pinfo: *mut epan_sys::_packet_info, err: anyhow::Error) {
+    log::error!("{err}");
+    let summary = format!(
+        "{} → {} {}",
+        (*pinfo).srcport,
+        (*pinfo).destport,
+        "Failed to decode possibly due to the experimental compression preference.",
+    );
+
+    // Update the info column
+    epan_sys::col_clear((*pinfo).cinfo, epan_sys::COL_INFO as std::ffi::c_int);
+    epan_sys::col_set_str(
+        (*pinfo).cinfo,
+        epan_sys::COL_INFO as _,
+        nul_terminated_str(&summary).unwrap(),
+    );
+}
+
+unsafe fn show_summary(pinfo: *mut epan_sys::_packet_info, packet_summary: SizedSummary) {
+    let summary = format!(
+        "{} → {} {}",
+        (*pinfo).srcport,
+        (*pinfo).destport,
+        packet_summary
+    );
+
+    // Update the info column
+    epan_sys::col_clear((*pinfo).cinfo, epan_sys::COL_INFO as std::ffi::c_int);
+    epan_sys::col_set_str(
+        (*pinfo).cinfo,
+        epan_sys::COL_INFO as _,
+        nul_terminated_str(&summary).unwrap(),
+    );
 }
