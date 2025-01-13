@@ -59,7 +59,7 @@ static mut UDP_PORT: u32 = 7447;
 static mut TCP_PORT: u32 = 7447;
 static mut CURR_UDP_PORT: u32 = 7447;
 static mut CURR_TCP_PORT: u32 = 7447;
-static mut DISABLE_HEURISTIC_DISSECTOR: bool = false;
+static mut ENABLE_HEURISTIC_DISSECTOR: bool = false;
 
 #[no_mangle]
 extern "C" fn plugin_register() {
@@ -144,12 +144,12 @@ fn register_zenoh_protocol() -> Result<()> {
 
         epan_sys::prefs_register_bool_preference(
             zenoh_module,
-            nul_terminated_str("disable_heuristic_dissector")?,
-            nul_terminated_str("Disable the heuristic dissector")?,
+            nul_terminated_str("enable_heuristic_dissector")?,
+            nul_terminated_str("Enable the heuristic dissector")?,
             nul_terminated_str(
                 "The heuristic dissector tries to decode all TCP and UDP packets as Zenoh messages which could be performance-intensive.",
             )?,
-            &mut DISABLE_HEURISTIC_DISSECTOR as _,
+            &mut ENABLE_HEURISTIC_DISSECTOR as _,
         );
     }
 
@@ -201,8 +201,6 @@ unsafe extern "C" fn register_handoff() {
     PROTOCOL_DATA.with(|data| {
         let proto_id = data.borrow().id;
 
-        // TODO(fuzzypixelz): should these dissectors be removed (alongside port preferences) now
-        // that we have a heursitic dissector?
         let handle = epan_sys::create_dissector_handle(Some(dissect_main), proto_id);
         epan_sys::dissector_add_uint_with_preference(
             nul_terminated_str("tcp.port").unwrap(),
@@ -238,7 +236,7 @@ unsafe extern "C" fn register_handoff() {
         log::info!("Zenoh heuristic dissector is registered for TCP and UDP");
         log::info!(
             "Zenoh heuristic dissector is {}",
-            if DISABLE_HEURISTIC_DISSECTOR {
+            if ENABLE_HEURISTIC_DISSECTOR {
                 "disabled"
             } else {
                 "enabled"
@@ -406,7 +404,7 @@ unsafe extern "C" fn dissect_heur(
     tree: *mut epan_sys::_proto_node,
     data: *mut std::ffi::c_void,
 ) -> bool {
-    if DISABLE_HEURISTIC_DISSECTOR {
+    if !ENABLE_HEURISTIC_DISSECTOR {
         false
     } else {
         if let Ok(summary) = try_dissect_main(tvb, pinfo, tree, data).0 {
