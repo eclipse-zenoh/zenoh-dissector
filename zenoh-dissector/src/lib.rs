@@ -232,7 +232,7 @@ unsafe extern "C" fn register_handoff() {
             epan_sys::heuristic_enable_e_HEURISTIC_ENABLE,
         );
 
-        log::info!("Zenoh dissector is registered for TCP and UDP at port 7447");
+        log::info!("Zenoh dissector is registered for TCP port {TCP_PORT} and UDP port {UDP_PORT}");
         log::info!("Zenoh heuristic dissector is registered for TCP and UDP");
         log::info!(
             "Zenoh heuristic dissector is {}",
