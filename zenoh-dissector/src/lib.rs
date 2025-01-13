@@ -406,13 +406,11 @@ unsafe extern "C" fn dissect_heur(
 ) -> bool {
     if !ENABLE_HEURISTIC_DISSECTOR {
         false
+    } else if let Ok(summary) = try_dissect_main(tvb, pinfo, tree, data).0 {
+        show_summary(pinfo, summary);
+        true
     } else {
-        if let Ok(summary) = try_dissect_main(tvb, pinfo, tree, data).0 {
-            show_summary(pinfo, summary);
-            true
-        } else {
-            false
-        }
+        false
     }
 }
 
