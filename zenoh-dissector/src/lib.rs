@@ -10,7 +10,7 @@ use header_field::Registration;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use tree::{AddToTree, TreeArgs};
-use utils::nul_terminated_str;
+use utils::{nul_terminated_str, SizedSummary};
 use wireshark::register_header_field;
 use zenoh_buffers::reader::HasReader;
 use zenoh_buffers::reader::Reader;
@@ -189,31 +189,51 @@ unsafe extern "C" fn register_protoinfo() {
 unsafe extern "C" fn register_handoff() {
     PROTOCOL_DATA.with(|data| {
         let proto_id = data.borrow().id;
-        unsafe {
-            let handle = epan_sys::create_dissector_handle(Some(dissect_main), proto_id);
-            epan_sys::dissector_add_uint_with_preference(
-                nul_terminated_str("tcp.port").unwrap(),
-                TCP_PORT as _,
-                handle,
-            );
-            epan_sys::dissector_add_uint_with_preference(
-                nul_terminated_str("udp.port").unwrap(),
-                UDP_PORT as _,
-                handle,
-            );
-            data.borrow_mut().handle = Some(handle);
-        }
 
-        log::info!("Zenoh dissector registered at tcp.port:7447 and udp.port:7447.");
+        // TODO(fuzzypixelz): should these dissectors be removed (alongside port preferences) now
+        // that we have a heursitic dissector?
+        let handle = epan_sys::create_dissector_handle(Some(dissect_main), proto_id);
+        epan_sys::dissector_add_uint_with_preference(
+            nul_terminated_str("tcp.port").unwrap(),
+            TCP_PORT as _,
+            handle,
+        );
+        epan_sys::dissector_add_uint_with_preference(
+            nul_terminated_str("udp.port").unwrap(),
+            UDP_PORT as _,
+            handle,
+        );
+        data.borrow_mut().handle = Some(handle);
+
+        // See https://www.wireshark.org/docs/wsar_html/group__packet.html#gac1f89fb22ed3dd53cb3aecbc7b87a528
+        epan_sys::heur_dissector_add(
+            nul_terminated_str("tcp").unwrap(),
+            Some(dissect_heur),
+            nul_terminated_str("Zenoh over TCP").unwrap(),
+            nul_terminated_str("zenoh_tcp").unwrap(),
+            proto_id,
+            epan_sys::heuristic_enable_e_HEURISTIC_ENABLE,
+        );
+        epan_sys::heur_dissector_add(
+            nul_terminated_str("udp").unwrap(),
+            Some(dissect_heur),
+            nul_terminated_str("Zenoh over UDP").unwrap(),
+            nul_terminated_str("zenoh_udp").unwrap(),
+            proto_id,
+            epan_sys::heuristic_enable_e_HEURISTIC_ENABLE,
+        );
+
+        log::info!("Zenoh dissector is registered for TCP and UDP at port 7447");
+        log::info!("Zenoh heuristic dissector is registered for TCP and UDP");
     });
 }
 
-unsafe extern "C" fn dissect_main(
+unsafe fn try_dissect_main(
     tvb: *mut epan_sys::tvbuff,
     pinfo: *mut epan_sys::_packet_info,
     tree: *mut epan_sys::_proto_node,
     _data: *mut std::ffi::c_void,
-) -> std::ffi::c_int {
+) -> (anyhow::Result<SizedSummary>, usize) {
     // Update the protocol column
     epan_sys::col_set_str(
         (*pinfo).cinfo,
@@ -236,7 +256,7 @@ unsafe extern "C" fn dissect_main(
     let mut reader = tvb_buf.reader();
 
     let root_key = "zenoh";
-    let res = PROTOCOL_DATA.with(|data| {
+    let summary = PROTOCOL_DATA.with(|data| {
         let tree_args = TreeArgs {
             tree,
             tvb,
@@ -342,7 +362,18 @@ unsafe extern "C" fn dissect_main(
         anyhow::Ok(packet_summary)
     });
 
-    match res {
+    (summary, tvb_len)
+}
+
+unsafe extern "C" fn dissect_main(
+    tvb: *mut epan_sys::tvbuff,
+    pinfo: *mut epan_sys::_packet_info,
+    tree: *mut epan_sys::_proto_node,
+    data: *mut std::ffi::c_void,
+) -> std::ffi::c_int {
+    let (summary, tvb_len) = try_dissect_main(tvb, pinfo, tree, data);
+
+    match summary {
         Ok(packet_summary) => {
             let summary = format!(
                 "{} → {} {}",
@@ -379,4 +410,13 @@ unsafe extern "C" fn dissect_main(
     }
 
     tvb_len as _
+}
+
+unsafe extern "C" fn dissect_heur(
+    tvb: *mut epan_sys::tvbuff,
+    pinfo: *mut epan_sys::_packet_info,
+    tree: *mut epan_sys::_proto_node,
+    data: *mut std::ffi::c_void,
+) -> bool {
+    try_dissect_main(tvb, pinfo, tree, data).0.is_ok()
 }
