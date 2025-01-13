@@ -177,6 +177,9 @@ We currently support
   > [!WARNING]
   > If you saw a message like "Failed to decode possibly due to the experimental compression preference.",
   those messages might not be compressed, please disable the compression preference to properly decode them.
+- (Experimental) Heuristic dissector: when enabled, zenoh-dissector will attempt to decode all TCP
+  and UDP packets as Zenoh messages. Note that this might be performance-intensive and could
+  theoretically lead to decoding non-Zenoh messages.
 
 ## License
 
