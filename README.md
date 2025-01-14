@@ -174,9 +174,11 @@ We currently support
 
 - TCP/UDP port selection.
 - (Experimental) Message decompression.
+
 > [!WARNING]
 > If you saw a message like "Failed to decode possibly due to the experimental compression preference.",
 those messages might not be compressed, please disable the compression preference to properly decode them.
+
 - (Experimental) Heuristic dissector (To enable it: Analyze > Enabled Protocols > zenoh_tcp_heur & zenoh_udp_heur).
 When enabled, zenoh-dissector will attempt to decode all TCP and UDP packets as Zenoh messages.
 Note that this might be performance-intensive and could theoretically lead to decoding non-Zenoh messages.
