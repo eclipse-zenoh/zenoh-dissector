@@ -168,18 +168,18 @@ Take the pub/sub as a example. One can check [here](https://github.com/eclipse-z
 
 ### Preferences
 
-One can  change the setting either via Edit > Preferences > Protocols > Zenoh or by a mouse right click > Protocol Preferneces > ZenohProtocols on any packet of zenoh protocol.
+One can change the setting either via Edit > Preferences > Protocols > Zenoh or by a mouse right click > Protocol Preferneces > ZenohProtocols on any packet of zenoh protocol.
 
 We currently support
 
-- TCP/UDP Port selection.
+- TCP/UDP port selection.
 - (Experimental) Message decompression.
-  > [!WARNING]
-  > If you saw a message like "Failed to decode possibly due to the experimental compression preference.",
-  those messages might not be compressed, please disable the compression preference to properly decode them.
-- (Experimental) Heuristic dissector: when enabled, zenoh-dissector will attempt to decode all TCP
-  and UDP packets as Zenoh messages. Note that this might be performance-intensive and could
-  theoretically lead to decoding non-Zenoh messages.
+> [!WARNING]
+> If you saw a message like "Failed to decode possibly due to the experimental compression preference.",
+those messages might not be compressed, please disable the compression preference to properly decode them.
+- (Experimental) Heuristic dissector (To enable it: Analyze > Enabled Protocols > zenoh_tcp_heur & zenoh_udp_heur).
+When enabled, zenoh-dissector will attempt to decode all TCP and UDP packets as Zenoh messages.
+Note that this might be performance-intensive and could theoretically lead to decoding non-Zenoh messages.
 
 ## License
 

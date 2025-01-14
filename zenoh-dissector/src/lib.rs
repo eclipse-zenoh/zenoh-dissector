@@ -59,7 +59,6 @@ static mut UDP_PORT: u32 = 7447;
 static mut TCP_PORT: u32 = 7447;
 static mut CURR_UDP_PORT: u32 = 7447;
 static mut CURR_TCP_PORT: u32 = 7447;
-static mut ENABLE_HEURISTIC_DISSECTOR: bool = false;
 
 #[no_mangle]
 extern "C" fn plugin_register() {
@@ -141,16 +140,6 @@ fn register_zenoh_protocol() -> Result<()> {
             nul_terminated_str("Is Zenoh message compressed")?,
             &mut IS_COMPRESSION as _,
         );
-
-        epan_sys::prefs_register_bool_preference(
-            zenoh_module,
-            nul_terminated_str("enable_heuristic_dissector")?,
-            nul_terminated_str("Enable the heuristic dissector")?,
-            nul_terminated_str(
-                "The heuristic dissector tries to decode all TCP and UDP packets as Zenoh messages which could be performance-intensive.",
-            )?,
-            &mut ENABLE_HEURISTIC_DISSECTOR as _,
-        );
     }
 
     let hf_map = ZenohProtocol::generate_hf_map("zenoh");
@@ -218,34 +207,26 @@ unsafe extern "C" fn register_handoff() {
         epan_sys::heur_dissector_add(
             nul_terminated_str("tcp").unwrap(),
             Some(dissect_heur),
-            nul_terminated_str("Zenoh over TCP").unwrap(),
-            nul_terminated_str("zenoh_tcp").unwrap(),
+            nul_terminated_str("Zenoh over TCP Heuristic").unwrap(),
+            nul_terminated_str("zenoh_tcp_heur").unwrap(),
             proto_id,
-            epan_sys::heuristic_enable_e_HEURISTIC_ENABLE,
+            epan_sys::heuristic_enable_e_HEURISTIC_DISABLE,
         );
         epan_sys::heur_dissector_add(
             nul_terminated_str("udp").unwrap(),
             Some(dissect_heur),
-            nul_terminated_str("Zenoh over UDP").unwrap(),
-            nul_terminated_str("zenoh_udp").unwrap(),
+            nul_terminated_str("Zenoh over UDP Heuristic").unwrap(),
+            nul_terminated_str("zenoh_udp_heur").unwrap(),
             proto_id,
-            epan_sys::heuristic_enable_e_HEURISTIC_ENABLE,
+            epan_sys::heuristic_enable_e_HEURISTIC_DISABLE,
         );
 
         log::info!("Zenoh dissector is registered for TCP port {TCP_PORT} and UDP port {UDP_PORT}");
         log::info!("Zenoh heuristic dissector is registered for TCP and UDP");
-        log::info!(
-            "Zenoh heuristic dissector is {}",
-            if ENABLE_HEURISTIC_DISSECTOR {
-                "disabled"
-            } else {
-                "enabled"
-            }
-        );
     });
 }
 
-unsafe fn try_dissect_main(
+unsafe fn try_dissect_in_zenoh(
     tvb: *mut epan_sys::tvbuff,
     pinfo: *mut epan_sys::_packet_info,
     tree: *mut epan_sys::_proto_node,
@@ -388,7 +369,7 @@ unsafe extern "C" fn dissect_main(
     tree: *mut epan_sys::_proto_node,
     data: *mut std::ffi::c_void,
 ) -> std::ffi::c_int {
-    let (summary, tvb_len) = try_dissect_main(tvb, pinfo, tree, data);
+    let (summary, tvb_len) = try_dissect_in_zenoh(tvb, pinfo, tree, data);
 
     match summary {
         Ok(packet_summary) => show_summary(pinfo, packet_summary),
@@ -404,9 +385,7 @@ unsafe extern "C" fn dissect_heur(
     tree: *mut epan_sys::_proto_node,
     data: *mut std::ffi::c_void,
 ) -> bool {
-    if !ENABLE_HEURISTIC_DISSECTOR {
-        false
-    } else if let Ok(summary) = try_dissect_main(tvb, pinfo, tree, data).0 {
+    if let Ok(summary) = try_dissect_in_zenoh(tvb, pinfo, tree, data).0 {
         show_summary(pinfo, summary);
         true
     } else {
