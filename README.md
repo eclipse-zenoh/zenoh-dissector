@@ -176,19 +176,22 @@ Currently supported settings are as follows:
 1. TCP/UDP port selection.
 2. (Experimental) Message decompression.
 
-> [!WARNING] Zenoh dissector does not support packet captures that mix compressed and uncompressed
-> messages. Message decompression should be enabled if and only if all Zenoh messages are
-> compressed. If you see a message that reads "Failed to decode possibly due to the experimental
-> compression preference", this might indicate that some Zenoh messages are not compressed, while
-> the dissector is configured to decode them as compressed messages (or vice versa).
+> [!WARNING]
+> Zenoh dissector does not support packet captures that mix compressed and uncompressed messages.
+> Message decompression should be enabled if and only if all Zenoh messages are compressed. If you
+> see a message that reads "Failed to decode possibly due to the experimental compression
+> preference", this might indicate that some Zenoh messages are not compressed, while the dissector
+> is configured to decode them as compressed messages (or vice versa).
 
 3. (Experimental) Heuristic dissector. This setting is not present in `Edit > Preferences >
 Protocols > Zenoh` but instead in `Analyze > Enabled Protocols`. Under `Zenoh`, the two heuristic
 dissectors `zenoh_tcp_heur` (Zenoh over TCP) and `zenoh_udp_heur` (Zenoh over UDP) can be enabled by
-switching their respective checkboxes. When enabled, Zenoh dissector will attempt to decode all TCP
-and UDP packets as Zenoh messages. Note that this might be performance-intensive and could
-theoretically even lead to decoding non-Zenoh messages. For these reasons, the heuristic dissector
-is disabled by default.
+switching their respective checkboxes. 
+
+> [!IMPORTANT]
+> When enabled, Zenoh dissector will attempt to decode all TCP and UDP packets as Zenoh messages.
+> Note that this might be performance-intensive and could theoretically even lead to decoding
+> non-Zenoh messages. For these reasons, the heuristic dissector is disabled by default.
 
 ## License
 
