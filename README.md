@@ -173,8 +173,8 @@ Zenoh` or by right clicking a Zenoh packet and selecting `Protocol Preferences >
 
 Currently supported settings are as follows:
 
-1. TCP/UDP port selection.
-2. (Experimental) Message decompression.
+- TCP/UDP port selection.
+- (Experimental) Message decompression.
 
 > [!WARNING]
 > Zenoh dissector does not support packet captures that mix compressed and uncompressed messages.
@@ -183,10 +183,10 @@ Currently supported settings are as follows:
 > preference", this might indicate that some Zenoh messages are not compressed, while the dissector
 > is configured to decode them as compressed messages (or vice versa).
 
-3. (Experimental) Heuristic dissector. This setting is not present in `Edit > Preferences >
-Protocols > Zenoh` but instead in `Analyze > Enabled Protocols`. Under `Zenoh`, the two heuristic
-dissectors `zenoh_tcp_heur` (Zenoh over TCP) and `zenoh_udp_heur` (Zenoh over UDP) can be enabled by
-switching their respective checkboxes. 
+- (Experimental) Heuristic dissector. This setting is not present in `Edit > Preferences > Protocols > Zenoh`
+  but instead in `Analyze > Enabled Protocols`. Under the `Zenoh` protocol,
+  the two heuristic dissectors `zenoh_tcp_heur` (Zenoh over TCP) and `zenoh_udp_heur` (Zenoh over UDP)
+  can be enabled by switching their respective checkboxes.
 
 > [!IMPORTANT]
 > When enabled, Zenoh dissector will attempt to decode all TCP and UDP packets as Zenoh messages.
