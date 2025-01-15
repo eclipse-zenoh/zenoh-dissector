@@ -207,7 +207,7 @@ unsafe extern "C" fn register_handoff() {
         epan_sys::heur_dissector_add(
             nul_terminated_str("tcp").unwrap(),
             Some(dissect_heur),
-            nul_terminated_str("Zenoh over TCP Heuristic").unwrap(),
+            nul_terminated_str("Zenoh over TCP (heuristic)").unwrap(),
             nul_terminated_str("zenoh_tcp_heur").unwrap(),
             proto_id,
             epan_sys::heuristic_enable_e_HEURISTIC_DISABLE,
@@ -215,7 +215,7 @@ unsafe extern "C" fn register_handoff() {
         epan_sys::heur_dissector_add(
             nul_terminated_str("udp").unwrap(),
             Some(dissect_heur),
-            nul_terminated_str("Zenoh over UDP Heuristic").unwrap(),
+            nul_terminated_str("Zenoh over UDP (heuristic)").unwrap(),
             nul_terminated_str("zenoh_udp_heur").unwrap(),
             proto_id,
             epan_sys::heuristic_enable_e_HEURISTIC_DISABLE,
