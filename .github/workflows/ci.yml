@@ -19,22 +19,13 @@ jobs:
           globs: '**/README.md'
 
   ci_macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/macos.yml
+    uses: ./.github/workflows/macos.yml
 
   ci_windows:
-    runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/windows.yml
+    uses: ./.github/workflows/windows.yml
 
   ci_ubuntu:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/ubuntu.yml
+    uses: ./.github/workflows/ubuntu.yml
 
   # NOTE: In GitHub repository settings, the "Require status checks to pass
   # before merging" branch protection rule ensures that commits are only merged
