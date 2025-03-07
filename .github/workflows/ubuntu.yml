@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ubuntu-latest
+        os: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -41,8 +41,6 @@ jobs:
         with:
           cache-bin: false
 
-      - run: cargo fmt -- --check
-
       - name: Install dependencies
         run: |
           sudo apt install -y software-properties-common
@@ -50,11 +48,14 @@ jobs:
           sudo apt install -y wireshark-dev
           sudo apt install -y --allow-change-held-packages wireshark
 
-      - name: Clippy
-        run: cargo clippy --all-targets --all-features -- --deny warnings
+      - name: Code format check
+        run: cargo fmt -- --check
 
       - name: Bindgen Test
         run: cargo build -F bindgen
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- --deny warnings
 
       - name: Build
         run: cargo build

@@ -41,9 +41,6 @@ jobs:
         with:
           cache-bin: false
 
-      - name: Code format check
-        run: cargo fmt -- --check
-
       - name: Install Dependencies
         run: brew install speexdsp
 
@@ -51,6 +48,9 @@ jobs:
         run: |
           brew install --cask wireshark
           ln -snf $(find /Applications/Wireshark.app/Contents/Frameworks -name "libwireshark.*.dylib" | tail -n 1) libwireshark.dylib
+
+      - name: Code format check
+        run: cargo fmt -- --check
 
       - name: Bindgen Test
         run: cargo build -F bindgen
