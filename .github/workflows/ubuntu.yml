@@ -57,12 +57,12 @@ jobs:
         run: cargo build -F bindgen
 
       - name: Build
-        run: cargo build --release
+        run: cargo build
 
       - name: Place the plugin
         run: |
           mkdir -p ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan
-          cp ./target/release/libzenoh_dissector.so ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan/libzenoh_dissector.so
+          cp ./target/debug/libzenoh_dissector.so ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan/libzenoh_dissector.so
 
       - name: Test the sample data
         run: |

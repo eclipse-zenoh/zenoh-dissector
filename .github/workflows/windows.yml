@@ -64,7 +64,7 @@ jobs:
         run: cargo clippy --all-targets --all-features -- --deny warnings
 
       - name: Build
-        run: cargo build --release
+        run: cargo build
 
       - name: Place the plugin
         run: |
@@ -72,7 +72,7 @@ jobs:
           if (-Not (Test-Path $epan_dir)) {
             mkdir -p $epan_dir
           }
-          cp .\target\release\zenoh_dissector.dll $epan_dir
+          cp .\target\debug\zenoh_dissector.dll $epan_dir
 
       - name: Test the sample data
         run: |
