@@ -19,6 +19,7 @@ on:
 env:
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
   WIRESHARK_VERSION: 4.4
+  CHOCO_WIRESHARK_VERSION: 4.4.5
   # NOTE: Use a pre-built wireshark library to speed up. This requires a manual installation.
   # WIRESHARK_LIB_DIR: C:\Development\wireshark-4.4.0
 
@@ -32,13 +33,13 @@ jobs:
       - name: Install dependencies
         run: |
           $installed = (choco list -l -r --id-only) -join " "
-          $install_list = @("xsltproc", "docbook-bundle", "nsis", "winflexbison3", "cmake", "7zip")
+          $install_list = @("xsltproc", "docbook-bundle", "nsis", "winflexbison3", "cmake", "7zip", "pkgconfiglite")
           ForEach ($pkg in $install_list.split(" ")) {
             if (-Not ($installed.contains($pkg))) {
               choco install -y --force --no-progress $pkg
             }
           }
-          choco install -y --no-progress wireshark --version 4.2.0
+          choco install -y --no-progress wireshark --version ${{ env.CHOCO_WIRESHARK_VERSION }}
 
       # # WARN: Wireshark building seems to fail on Python 3.13
       # # WARN: Use python"3" according to https://stackoverflow.com/a/74408229
