@@ -49,7 +49,7 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Clippy
-        run: cargo clippy --all-targets -- --deny warnings
+        run: cargo clippy --all-targets --all-features -- --deny warnings
 
       - name: Build
         run: cargo build --release
