@@ -30,6 +30,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Update Stable Rust toolchain
+        run: rustup update stable
+
+      - name: Setup rust-cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
+
       - name: Install dependencies
         run: |
           $installed = (choco list -l -r --id-only) -join " "
@@ -48,6 +56,9 @@ jobs:
 
       - name: Code format check
         run: cargo fmt -- --check
+
+      - name: Bindgen Test
+        run: cargo build -F bindgen
 
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- --deny warnings

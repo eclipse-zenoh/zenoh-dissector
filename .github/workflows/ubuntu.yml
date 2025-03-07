@@ -33,6 +33,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Update Stable Rust toolchain
+        run: rustup update stable
+
+      - name: Setup rust-cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
+
       - run: cargo fmt -- --check
 
       - name: Install dependencies
@@ -44,6 +52,9 @@ jobs:
 
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- --deny warnings
+
+      - name: Bindgen Test
+        run: cargo build -F bindgen
 
       - name: Build
         run: cargo build --release
