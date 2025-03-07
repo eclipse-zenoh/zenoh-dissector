@@ -26,7 +26,10 @@ env:
 jobs:
   check:
     name: Run checks on Windows
-    runs-on: windows-2022
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+
     steps:
       - uses: actions/checkout@v4
 
