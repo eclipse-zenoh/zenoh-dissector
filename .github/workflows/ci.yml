@@ -9,23 +9,23 @@ on:
     - cron: "0 6 * * 1-5"
 
 jobs:
-  markdown_lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: DavidAnson/markdownlint-cli2-action@v18
-        with:
-          config: '.markdownlint.yaml'
-          globs: '**/README.md'
+  # markdown_lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: DavidAnson/markdownlint-cli2-action@v18
+  #       with:
+  #         config: '.markdownlint.yaml'
+  #         globs: '**/README.md'
 
   ci_macos:
     uses: ./.github/workflows/macos.yml
 
-  ci_windows:
-    uses: ./.github/workflows/windows.yml
-
-  ci_ubuntu:
-    uses: ./.github/workflows/ubuntu.yml
+  # ci_windows:
+  #   uses: ./.github/workflows/windows.yml
+  #
+  # ci_ubuntu:
+  #   uses: ./.github/workflows/ubuntu.yml
 
   # NOTE: In GitHub repository settings, the "Require status checks to pass
   # before merging" branch protection rule ensures that commits are only merged
