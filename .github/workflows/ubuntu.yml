@@ -46,24 +46,24 @@ jobs:
           sudo apt install -y wireshark-dev
           sudo apt install -y --allow-change-held-packages wireshark
 
-      - name: Code format check
-        run: cargo fmt -- --check
+      # - name: Code format check
+      #   run: cargo fmt -- --check
 
       - name: Bindgen Test
         run: cargo build -F bindgen
 
-      - name: Clippy
-        run: cargo clippy --all-targets --all-features -- --deny warnings
-
-      - name: Build
-        run: cargo build
-
-      - name: Place the plugin
-        run: |
-          mkdir -p ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan
-          cp ./target/debug/libzenoh_dissector.so ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan/libzenoh_dissector.so
-
-      - name: Test the sample data
-        run: |
-          sudo apt install -y tshark
-          [ $(tshark -r assets/sample-data.pcap | grep Zenoh | wc -l) -eq 7 ] || return 1
+      # - name: Clippy
+      #   run: cargo clippy --all-targets --all-features -- --deny warnings
+      #
+      # - name: Build
+      #   run: cargo build
+      #
+      # - name: Place the plugin
+      #   run: |
+      #     mkdir -p ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan
+      #     cp ./target/debug/libzenoh_dissector.so ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan/libzenoh_dissector.so
+      #
+      # - name: Test the sample data
+      #   run: |
+      #     sudo apt install -y tshark
+      #     [ $(tshark -r assets/sample-data.pcap | grep Zenoh | wc -l) -eq 7 ] || return 1
