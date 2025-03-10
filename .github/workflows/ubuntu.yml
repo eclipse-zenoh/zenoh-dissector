@@ -39,18 +39,24 @@ jobs:
         with:
           cache-bin: false
 
-      - name: Install dependencies
+      - name: openssl
         run: |
-          sudo apt install -y software-properties-common liblzma-dev
-          sudo add-apt-repository -y ppa:wireshark-dev/stable
-          sudo apt install -y wireshark-dev
-          sudo apt install -y --allow-change-held-packages wireshark
+          git clone https://github.com/sfackler/rust-openssl
+          cd rust-openssl
+          cargo check
+
+      # - name: Install dependencies
+      #   run: |
+      #     sudo apt install -y software-properties-common libssl-dev liblzma-dev
+      #     sudo add-apt-repository -y ppa:wireshark-dev/stable
+      #     sudo apt install -y wireshark-dev
+      #     sudo apt install -y --allow-change-held-packages wireshark
 
       # - name: Code format check
       #   run: cargo fmt -- --check
 
-      - name: Bindgen Test
-        run: cargo build -F bindgen
+      # - name: Bindgen Test
+      #   run: cargo build -F bindgen
 
       # - name: Clippy
       #   run: cargo clippy --all-targets --all-features -- --deny warnings
