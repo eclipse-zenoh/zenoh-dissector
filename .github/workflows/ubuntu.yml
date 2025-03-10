@@ -54,11 +54,18 @@ jobs:
 
       - name: print version
         run: |
+          echo =======================================================
           wireshark --version
+          echo =======================================================
           openssl version
+          echo =======================================================
           apt list libssl-dev
+          echo =======================================================
           ldconfig -p | grep libssl
+          echo =======================================================
           strings /usr/lib/x86_64-linux-gnu/libssl.so | grep -i openssl
+          echo =======================================================
+          grep SSL_get1_peer_certificate /usr/include/openssl/*
 
       # - name: Code format check
       #   run: cargo fmt -- --check
