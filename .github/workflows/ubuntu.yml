@@ -52,6 +52,11 @@ jobs:
           cd rust-openssl
           cargo check
 
+      - name: print version
+        run: |
+          wireshark --version
+          openssl version
+          apt list libssl-dev
 
       # - name: Code format check
       #   run: cargo fmt -- --check
