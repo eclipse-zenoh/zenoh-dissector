@@ -46,11 +46,11 @@ jobs:
           sudo apt install -y wireshark-dev
           sudo apt install -y --allow-change-held-packages wireshark
 
-      - name: openssl
-        run: |
-          git clone https://github.com/sfackler/rust-openssl
-          cd rust-openssl
-          cargo check
+      # - name: openssl
+      #   run: |
+      #     git clone https://github.com/sfackler/rust-openssl
+      #     cd rust-openssl
+      #     cargo check
 
       - name: print version
         run: |
@@ -61,8 +61,8 @@ jobs:
       # - name: Code format check
       #   run: cargo fmt -- --check
 
-      # - name: Bindgen Test
-      #   run: cargo build -F bindgen
+      - name: Bindgen Test
+        run: cargo build -v -F bindgen
 
       # - name: Clippy
       #   run: cargo clippy --all-targets --all-features -- --deny warnings
