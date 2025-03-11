@@ -41,50 +41,35 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt install -y software-properties-common libssl-dev liblzma-dev openssl
+          sudo apt install -y software-properties-common libssl-dev liblzma-dev
           sudo add-apt-repository -y ppa:wireshark-dev/stable
           sudo apt install -y wireshark-dev
           sudo apt install -y --allow-change-held-packages wireshark
 
-      # - name: openssl
-      #   run: |
-      #     git clone https://github.com/sfackler/rust-openssl
-      #     cd rust-openssl
-      #     cargo check
-
-      - name: print version
+      - name: openssl
         run: |
-          echo =======================================================
-          wireshark --version
-          echo =======================================================
-          openssl version
-          echo =======================================================
-          apt list libssl-dev
-          echo =======================================================
-          ldconfig -p | grep libssl
-          echo =======================================================
-          strings /usr/lib/x86_64-linux-gnu/libssl.so | grep -i openssl
-          echo =======================================================
-          grep SSL_get1_peer_certificate /usr/include/openssl/*
+          git clone https://github.com/sfackler/rust-openssl
+          cd rust-openssl
+          cargo check
 
-      # - name: Code format check
-      #   run: cargo fmt -- --check
+      - name: Code format check
+        run: cargo fmt -- --check
 
       - name: Bindgen Test
-        run: cargo build -v -F bindgen
+        run: cargo build -F bindgen
 
-      # - name: Clippy
-      #   run: cargo clippy --all-targets --all-features -- --deny warnings
-      #
-      # - name: Build
-      #   run: cargo build
-      #
-      # - name: Place the plugin
-      #   run: |
-      #     mkdir -p ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan
-      #     cp ./target/debug/libzenoh_dissector.so ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan/libzenoh_dissector.so
-      #
-      # - name: Test the sample data
-      #   run: |
-      #     sudo apt install -y tshark
-      #     [ $(tshark -r assets/sample-data.pcap | grep Zenoh | wc -l) -eq 7 ] || return 1
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- --deny warnings
+
+      - name: Build
+        run: cargo build
+
+      - name: Place the plugin
+        run: |
+          mkdir -p ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan
+          cp ./target/debug/libzenoh_dissector.so ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan/libzenoh_dissector.so
+
+      - name: Test the sample data
+        run: |
+          sudo apt install -y tshark
+          [ $(tshark -r assets/sample-data.pcap | grep Zenoh | wc -l) -eq 7 ] || return 1
