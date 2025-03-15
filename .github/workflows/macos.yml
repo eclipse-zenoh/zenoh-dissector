@@ -29,27 +29,42 @@ jobs:
     runs-on: macos-latest
     strategy:
       fail-fast: false
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Code format check
-        run: cargo fmt -- --check
+      - name: Update Stable Rust toolchain
+        run: rustup update stable
+
+      - name: Setup rust-cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
+
+      - name: Install Dependencies
+        run: brew install speexdsp
 
       - name: Install Wireshark
         run: |
           brew install --cask wireshark
           ln -snf $(find /Applications/Wireshark.app/Contents/Frameworks -name "libwireshark.*.dylib" | tail -n 1) libwireshark.dylib
 
+      - name: Code format check
+        run: cargo fmt -- --check
+
+      - name: Bindgen Test
+        run: cargo build -F bindgen
+
       - name: Clippy
-        run: cargo clippy --all-targets -- --deny warnings
+        run: cargo clippy --all-targets --all-features -- --deny warnings
 
       - name: Build
-        run: cargo build --release
+        run: cargo build
 
       - name: Place the plugin
         run: |
           mkdir -p ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan
-          cp ./target/release/libzenoh_dissector.dylib ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan/libzenoh_dissector.so
+          cp ./target/debug/libzenoh_dissector.dylib ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan/libzenoh_dissector.so
 
       - name: Test the sample data
         run: |
