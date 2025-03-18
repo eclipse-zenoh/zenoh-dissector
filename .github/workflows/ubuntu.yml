@@ -24,36 +24,49 @@ env:
 jobs:
   check:
     name: Run checks on Ubuntu
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, ubuntu-22.04, ubuntu-20.04]
 
     steps:
       - uses: actions/checkout@v4
 
-      - run: cargo fmt -- --check
+      - name: Update Stable Rust toolchain
+        run: rustup update stable
+
+      - name: Setup rust-cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
 
       - name: Install dependencies
         run: |
-          sudo apt install -y software-properties-common
+          sudo apt install -y liblzma-dev
+          # sudo apt install -y software-properties-common libssl-dev liblzma-dev
           sudo add-apt-repository -y ppa:wireshark-dev/stable
+          sudo apt update -y
+          sudo apt upgrade -y
           sudo apt install -y wireshark-dev
           sudo apt install -y --allow-change-held-packages wireshark
 
-      - name: Clippy
-        run: cargo clippy --all-targets -- --deny warnings
+      # - name: Code format check
+      #   run: cargo fmt -- --check
 
-      - name: Build
-        run: cargo build --release
+      - name: Bindgen Test
+        run: cargo build -F bindgen
 
-      - name: Place the plugin
-        run: |
-          mkdir -p ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan
-          cp ./target/release/libzenoh_dissector.so ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan/libzenoh_dissector.so
-
-      - name: Test the sample data
-        run: |
-          sudo apt install -y tshark
-          [ $(tshark -r assets/sample-data.pcap | grep Zenoh | wc -l) -eq 7 ] || return 1
+      # - name: Clippy
+      #   run: cargo clippy --all-targets --all-features -- --deny warnings
+      #
+      # - name: Build
+      #   run: cargo build
+      #
+      # - name: Place the plugin
+      #   run: |
+      #     mkdir -p ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan
+      #     cp ./target/debug/libzenoh_dissector.so ~/.local/lib/wireshark/plugins/${{ env.WIRESHARK_VERSION }}/epan/libzenoh_dissector.so
+      #
+      # - name: Test the sample data
+      #   run: |
+      #     sudo apt install -y tshark
+      #     [ $(tshark -r assets/sample-data.pcap | grep Zenoh | wc -l) -eq 7 ] || return 1

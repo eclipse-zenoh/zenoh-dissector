@@ -79,15 +79,15 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - { target: x86_64-unknown-linux-gnu, os: ubuntu-20.04 }
-          - { target: aarch64-apple-darwin, os: macos-14 }
-          - { target: x86_64-pc-windows-msvc, os: windows-2022 }
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest }
+          - { target: aarch64-apple-darwin, os: macos-latest }
+          - { target: x86_64-pc-windows-msvc, os: windows-latest }
 
     steps:
       - if: contains(matrix.build.os, 'ubuntu')
         name: Install dependencies (Ubuntu)
         run: |
-          sudo apt install -y software-properties-common
+          sudo apt install -y software-properties-common libssl-dev liblzma-dev
           sudo add-apt-repository -y ppa:wireshark-dev/stable
           sudo apt install -y wireshark-dev
           sudo apt install -y --allow-change-held-packages wireshark
@@ -102,7 +102,7 @@ jobs:
               choco install -y --force --no-progress $pkg
             }
           }
-          choco install -y --no-progress wireshark --version 4.2.0
+          choco install -y --no-progress wireshark --version 4.4.5
 
       - if: contains(matrix.build.os, 'macos')
         name: Install dependencies (macOS)
