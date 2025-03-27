@@ -545,7 +545,7 @@ dependencies = [
 
 [[package]]
 name = "epan-sys"
-version = "1.2.1"
+version = "1.2.1-25-gd8a315d"
 dependencies = [
  "anyhow",
  "bindgen",
@@ -3182,7 +3182,7 @@ dependencies = [
 
 [[package]]
 name = "zenoh-dissector"
-version = "1.2.1"
+version = "1.2.1-25-gd8a315d"
 dependencies = [
  "anyhow",
  "convert_case",
