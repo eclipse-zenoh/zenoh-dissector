@@ -1,8 +1,11 @@
 use anyhow::{anyhow, Result};
-use zenoh_codec::network::NetworkMessageIter;
 use std::ffi::{c_char, CString};
 use zenoh_buffers::{reader::Reader, ZSlice};
-use zenoh_protocol::{network::{NetworkBody, NetworkMessage}, transport::{BatchSize, TransportMessage}};
+use zenoh_codec::network::NetworkMessageIter;
+use zenoh_protocol::{
+    network::{NetworkBody, NetworkMessage},
+    transport::{BatchSize, TransportMessage},
+};
 use zenoh_transport::common::batch::{BatchConfig, RBatch};
 
 pub fn nul_terminated_str(s: &str) -> Result<*const c_char> {
@@ -116,7 +119,8 @@ pub(crate) fn transport_message_summary(msg: &TransportMessage) -> String {
         KeepAlive(_) => "KeepAlive".to_string(),
         Frame(m) => {
             let mut res = "Frame[".to_string();
-            let mut netmsgs = NetworkMessageIter::new(m.reliability, m.payload.as_slice()).peekable();
+            let mut netmsgs =
+                NetworkMessageIter::new(m.reliability, m.payload.as_slice()).peekable();
             while let Some(m) = netmsgs.next() {
                 res += &network_message_summary(&m);
                 if netmsgs.peek().is_some() {

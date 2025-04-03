@@ -7,10 +7,10 @@ mod zenoh_impl;
 
 use anyhow::Result;
 use header_field::Registration;
-use utils::transport_message_summary;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use tree::{AddToTree, TreeArgs};
+use utils::transport_message_summary;
 use utils::{nul_terminated_str, SizedSummary};
 use wireshark::register_header_field;
 use zenoh_buffers::reader::HasReader;
