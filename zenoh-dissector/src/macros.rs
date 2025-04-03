@@ -147,7 +147,7 @@ macro_rules! impl_for_struct {
                 )*
 
                 $(
-                    for item in zenoh_codec::network::NetworkMessageIter::new(self.reliability, &mut self.$vec_name.clone())  {
+                    for item in zenoh_codec::network::NetworkMessageIter::new(self.reliability, self.$vec_name.as_slice())  {
                         item.add_to_tree(
                             &format!("{prefix}.{}", stringify!{$vec_name}),
                             args,

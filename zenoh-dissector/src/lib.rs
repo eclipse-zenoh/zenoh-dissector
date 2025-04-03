@@ -7,6 +7,7 @@ mod zenoh_impl;
 
 use anyhow::Result;
 use header_field::Registration;
+use utils::transport_message_summary;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use tree::{AddToTree, TreeArgs};
@@ -321,7 +322,7 @@ unsafe fn try_dissect_in_zenoh(
                     tree_args.start += tree_args.length;
 
                     batch_summary.append(|| {
-                        let mut msg_summary = msg.to_string();
+                        let mut msg_summary = transport_message_summary(&msg);
                         if msg_summary.len() > MSG_SUMMARY_LIMIT {
                             msg_summary.truncate(MSG_SUMMARY_LIMIT);
                             msg_summary += "...]";
