@@ -38,9 +38,29 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install -y software-properties-common
-          sudo add-apt-repository -y ppa:wireshark-dev/stable
-          sudo apt install -y wireshark-dev
-          sudo apt install -y --allow-change-held-packages wireshark
+          # Disabled due to https://gitlab.com/wireshark/wireshark/-/issues/20505
+          #sudo add-apt-repository -y ppa:wireshark-dev/stable
+          #sudo apt install -y wireshark-dev
+          #sudo apt install -y --allow-change-held-packages wireshark
+          # Manually download and install previous package version that doesn't depend on libgio-2.0-dev
+          wireshark_files=(
+            'libwireshark-data_4.4.6-1~ubuntu24.04.0~ppa1_all.deb'
+            'libwireshark18_4.4.6-1~ubuntu24.04.0~ppa1_amd64.deb'
+            'libwsutil16_4.4.6-1~ubuntu24.04.0~ppa1_amd64.deb'
+            'libwsutil-dev_4.4.6-1~ubuntu24.04.0~ppa1_amd64.deb'
+            'libwiretap15_4.4.6-1~ubuntu24.04.0~ppa1_amd64.deb'
+            'libwiretap-dev_4.4.6-1~ubuntu24.04.0~ppa1_amd64.deb'
+            'libwireshark-dev_4.4.6-1~ubuntu24.04.0~ppa1_amd64.deb'
+            'wireshark-common_4.4.6-1~ubuntu24.04.0~ppa1_amd64.deb'
+            'wireshark-dev_4.4.6-1~ubuntu24.04.0~ppa1_amd64.deb'
+            'wireshark-doc_4.4.6-1~ubuntu24.04.0~ppa1_all.deb'
+            'wireshark_4.4.6-1~ubuntu24.04.0~ppa1_amd64.deb'
+            'tshark_4.4.6-1~ubuntu24.04.0~ppa1_amd64.deb'
+          )
+          for filename in "${wireshark_files[@]}"; do
+            wget https://launchpad.net/~wireshark-dev/+archive/ubuntu/stable/+files/$filename
+            sudo dpkg -i $filename
+          done
 
       - name: Clippy
         run: cargo clippy --all-targets -- --deny warnings
@@ -55,5 +75,6 @@ jobs:
 
       - name: Test the sample data
         run: |
-          sudo apt install -y tshark
+          # Disabled due to same issue as above
+          #sudo apt install -y tshark
           [ $(tshark -r assets/sample-data.pcap | grep Zenoh | wc -l) -eq 7 ] || return 1
