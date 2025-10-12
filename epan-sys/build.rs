@@ -7,7 +7,7 @@ use std::env;
 use std::path::PathBuf;
 
 lazy_static! {
-    static ref WIRESHARK_VERSION: String = "4.4.0".to_string();
+    static ref WIRESHARK_VERSION: String = "4.6.0".to_string();
     static ref WIRESHARK_SOURCE_DIR: PathBuf = PathBuf::from(format!(
         "{}/wireshark-{}",
         env::var("CARGO_MANIFEST_DIR").unwrap(),
@@ -81,6 +81,7 @@ fn link_wireshark() -> Result<()> {
     }
 
     println!("cargo:rustc-link-lib=dylib=wireshark");
+    println!("cargo:rustc-link-lib=dylib=wsutil");
 
     Ok(())
 }

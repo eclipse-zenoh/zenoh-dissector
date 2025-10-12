@@ -9,6 +9,8 @@ use anyhow::Result;
 use header_field::Registration;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::ffi::{c_char, CStr};
+use std::{mem, ptr};
 use tree::{AddToTree, TreeArgs};
 use utils::transport_message_summary;
 use utils::{nul_terminated_str, SizedSummary};
@@ -17,21 +19,24 @@ use zenoh_buffers::reader::HasReader;
 use zenoh_buffers::reader::Reader;
 use zenoh_impl::ZenohProtocol;
 
-use zenoh_protocol::transport::{BatchSize, TransportMessage};
+use zenoh_protocol::transport::{BatchSize, TransportBody, TransportMessage};
 use zenoh_transport::common::batch::Decode;
+
+use crate::header_field::FieldKind;
+use crate::utils::nul_terminated_str2;
 
 // Pacakge version: "0.2.0\0"
 #[no_mangle]
 #[used]
 static plugin_version: [std::ffi::c_char; 6usize] = [48, 46, 50, 46, 48, 0];
 
-// Wireshark version: 4.4
+// Wireshark version: 4.6
 #[no_mangle]
 #[used]
 static plugin_want_major: std::ffi::c_int = 4;
 #[no_mangle]
 #[used]
-static plugin_want_minor: std::ffi::c_int = 4;
+static plugin_want_minor: std::ffi::c_int = 6;
 
 // Max number of summary of batch in one packet
 static MAX_PACKET_SUMMARY: usize = 5;
@@ -60,6 +65,9 @@ static mut UDP_PORT: u32 = 7447;
 static mut TCP_PORT: u32 = 7447;
 static mut CURR_UDP_PORT: u32 = 7447;
 static mut CURR_TCP_PORT: u32 = 7447;
+
+const FIELD_SRCZID: &str = "zenoh.srczid";
+const FIELD_DSTZID: &str = "zenoh.dstzid";
 
 #[no_mangle]
 extern "C" fn plugin_register() {
@@ -162,6 +170,16 @@ fn register_zenoh_protocol() -> Result<()> {
                 register_header_field(proto_id, &hf.name, &key, hf.kind)?,
             );
         }
+
+        // Extra header fields
+        data.borrow_mut().hf_map.insert(
+            FIELD_SRCZID.to_string(),
+            register_header_field(proto_id, &"Source ZID", FIELD_SRCZID, FieldKind::Text)?,
+        );
+        data.borrow_mut().hf_map.insert(
+            FIELD_DSTZID.to_string(),
+            register_header_field(proto_id, &"Destination ZID", FIELD_DSTZID, FieldKind::Text)?,
+        );
 
         // Subtree
         for name in subtree_names {
@@ -317,6 +335,9 @@ unsafe fn try_dissect_in_zenoh(
                         .decode()
                         .map_err(|_| anyhow::anyhow!("decoding error"))?;
 
+                    update_conversation_state(pinfo, &msg)?;
+                    update_zid_fields(pinfo, tvb, &tree_args);
+
                     tree_args.length = msg_len as _;
                     msg.add_to_tree("zenoh", &tree_args)?;
                     tree_args.start += tree_args.length;
@@ -349,6 +370,9 @@ unsafe fn try_dissect_in_zenoh(
                     .decode()
                     .map_err(|_| anyhow::anyhow!("decoding error"))?;
 
+                update_conversation_state(pinfo, &msg)?;
+                update_zid_fields(pinfo, tvb, &tree_args);
+
                 tree_args.length = msg_len as _;
                 msg.add_to_tree("zenoh", &tree_args)?;
                 tree_args.start += tree_args.length;
@@ -373,6 +397,156 @@ unsafe fn try_dissect_in_zenoh(
     });
 
     (summary, tvb_len)
+}
+
+#[derive(Debug)]
+#[repr(C)]
+struct ConversationState {
+    /// C string representing the InitSyn sender's (or "A") ZID of the conversation.
+    a_zid: *mut c_char,
+    /// Source port number of A->B messages.
+    a_port: u16,
+    /// C string representing the InitSyn receiver's (or "B") ZID of the conversation.
+    b_zid: *mut c_char,
+    /// Source port number of B->A messages.
+    b_port: u16,
+}
+
+impl ConversationState {
+    fn new() -> Self {
+        ConversationState {
+            a_zid: ptr::null_mut(),
+            a_port: u16::default(),
+            b_zid: ptr::null_mut(),
+            b_port: u16::default(),
+        }
+    }
+
+    const UNKNOWN_ZID: &str = "unknown";
+
+    unsafe fn source(&self, pinfo: *mut epan_sys::_packet_info) -> *const c_char {
+        if !self.a_zid.is_null() && (*pinfo).srcport == self.a_port as u32 {
+            self.a_zid
+        } else if !self.b_zid.is_null() && (*pinfo).srcport == self.b_port as u32 {
+            self.b_zid
+        } else {
+            nul_terminated_str2(Self::UNKNOWN_ZID).unwrap()
+        }
+    }
+
+    unsafe fn destination(&self, pinfo: *mut epan_sys::_packet_info) -> *const c_char {
+        if !self.a_zid.is_null() && (*pinfo).srcport == self.a_port as u32 {
+            if self.b_zid.is_null() {
+                nul_terminated_str2(Self::UNKNOWN_ZID).unwrap()
+            } else {
+                self.b_zid
+            }
+        } else if !self.b_zid.is_null() && (*pinfo).srcport == self.b_port as u32 {
+            if self.a_zid.is_null() {
+                nul_terminated_str2(Self::UNKNOWN_ZID).unwrap()
+            } else {
+                self.a_zid
+            }
+        } else {
+            nul_terminated_str2(Self::UNKNOWN_ZID).unwrap()
+        }
+    }
+}
+
+unsafe fn update_conversation_state(
+    pinfo: *mut epan_sys::_packet_info,
+    msg: &TransportMessage,
+) -> Result<()> {
+    // https://github.com/wireshark/wireshark/blob/7f37406d807ac05b72118a5075a405a30de90bb4/epan/conversation.h#L188-L208
+    let conv = epan_sys::find_conversation_pinfo(pinfo, 0);
+    if conv.is_null() {
+        return Ok(());
+    }
+
+    match &msg.body {
+        TransportBody::InitSyn(init_syn) => {
+            let conv_state = conversation_state(pinfo);
+            if conv_state.is_null() {
+                return Ok(());
+            }
+
+            let zid = nul_terminated_str2(init_syn.zid.to_string())?;
+
+            (*conv_state).a_zid = zid;
+            (*conv_state).a_port = (*pinfo).srcport as u16;
+        }
+        TransportBody::InitAck(init_ack) => {
+            let conv_state = conversation_state(pinfo);
+            if conv_state.is_null() {
+                return Ok(());
+            }
+
+            let zid = nul_terminated_str2(init_ack.zid.to_string())?;
+
+            (*conv_state).b_zid = zid;
+            (*conv_state).b_port = (*pinfo).srcport as u16;
+        }
+        _ => {}
+    }
+
+    Ok(())
+}
+
+/// Should be called after[`update_conversation_state`] and before other items are added.
+unsafe fn update_zid_fields(
+    pinfo: *mut epan_sys::_packet_info,
+    tvb: *mut epan_sys::tvbuff,
+    tree_args: &TreeArgs,
+) {
+    let conv_state = conversation_state(pinfo);
+    let src = (*conv_state).source(pinfo);
+    let dst = (*conv_state).destination(pinfo);
+
+    epan_sys::proto_tree_add_string(
+        tree_args.tree,
+        PROTOCOL_DATA.with_borrow(|d| d.hf_map[FIELD_SRCZID]),
+        tvb,
+        0,
+        0,
+        src,
+    );
+
+    epan_sys::proto_tree_add_string(
+        tree_args.tree,
+        PROTOCOL_DATA.with_borrow(|d| d.hf_map[FIELD_DSTZID]),
+        tvb,
+        0,
+        0,
+        dst,
+    );
+}
+
+unsafe fn conversation_state(pinfo: *mut epan_sys::_packet_info) -> *mut ConversationState {
+    // https://github.com/wireshark/wireshark/blob/7f37406d807ac05b72118a5075a405a30de90bb4/epan/conversation.h#L188-L208
+    let conv = epan_sys::find_conversation_pinfo(pinfo, 0);
+    if conv.is_null() {
+        return ptr::null_mut();
+    }
+
+    let proto = PROTOCOL_DATA.with_borrow(|data| data.id);
+
+    let proto_data = epan_sys::conversation_get_proto_data(conv, proto);
+
+    let conv_state = if proto_data.is_null() {
+        let conv_state = epan_sys::wmem_alloc0(
+            epan_sys::wmem_file_scope(),
+            mem::size_of::<ConversationState>(),
+        ) as *mut ConversationState;
+
+        conv_state.write(ConversationState::new());
+        epan_sys::conversation_add_proto_data(conv, proto, conv_state as *mut _);
+
+        conv_state
+    } else {
+        proto_data as *mut ConversationState
+    };
+
+    conv_state
 }
 
 unsafe extern "C" fn dissect_main(
@@ -424,10 +598,24 @@ unsafe fn show_error(pinfo: *mut epan_sys::_packet_info, err: anyhow::Error) {
 }
 
 unsafe fn show_summary(pinfo: *mut epan_sys::_packet_info, packet_summary: SizedSummary) {
+    // NOTE: SHOULD be computed after calls to update_conversation_state
+    let conv_state = conversation_state(pinfo);
+    let src = (*conv_state).source(pinfo);
+    let dst = (*conv_state).destination(pinfo);
+
+    pub fn short(s: &str) -> &str {
+        const MAX_ZID_LEN: usize = 8;
+        if s.len() <= MAX_ZID_LEN {
+            s
+        } else {
+            &s[..MAX_ZID_LEN]
+        }
+    }
+
     let summary = format!(
         "{} → {} {}",
-        (*pinfo).srcport,
-        (*pinfo).destport,
+        short(CStr::from_ptr(src).to_str().unwrap()),
+        short(CStr::from_ptr(dst).to_str().unwrap()),
         packet_summary
     );
 
