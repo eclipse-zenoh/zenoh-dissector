@@ -35,6 +35,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt update
           sudo apt install -y software-properties-common
           sudo apt install -y wireshark-dev
           sudo apt install -y --allow-change-held-packages wireshark
