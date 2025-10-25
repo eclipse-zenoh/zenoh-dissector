@@ -25,13 +25,13 @@ use zenoh_transport::common::batch::Decode;
 #[used]
 static plugin_version: [std::ffi::c_char; 6usize] = [48, 46, 50, 46, 48, 0];
 
-// Wireshark version: 4.4
+// Wireshark version: 4.6
 #[no_mangle]
 #[used]
 static plugin_want_major: std::ffi::c_int = 4;
 #[no_mangle]
 #[used]
-static plugin_want_minor: std::ffi::c_int = 4;
+static plugin_want_minor: std::ffi::c_int = 6;
 
 // Max number of summary of batch in one packet
 static MAX_PACKET_SUMMARY: usize = 5;
