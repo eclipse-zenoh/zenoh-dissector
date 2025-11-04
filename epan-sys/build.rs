@@ -2,12 +2,21 @@
 extern crate bindgen;
 
 use anyhow::Result;
+use cargo_metadata::MetadataCommand;
 use lazy_static::lazy_static;
 use std::env;
 use std::path::PathBuf;
 
 lazy_static! {
-    static ref WIRESHARK_VERSION: String = "4.4.0".to_string();
+    static ref WIRESHARK_VERSION: String = {
+        let metadata = MetadataCommand::new().exec().unwrap();
+        metadata
+            .workspace_metadata
+            .get("wireshark_version")
+            .and_then(|v| v.as_str())
+            .expect("Wireshark version must be set in Cargo.toml under [workspace.metadata]")
+            .to_string()
+    };
     static ref WIRESHARK_SOURCE_DIR: PathBuf = PathBuf::from(format!(
         "{}/wireshark-{}",
         env::var("CARGO_MANIFEST_DIR").unwrap(),

@@ -5,12 +5,12 @@ fn main() {
     let metadata = MetadataCommand::new().exec().unwrap();
     let pkg = metadata.root_package().unwrap();
 
-    // Get Wireshark version from Cargo.toml metadata
-    let wireshark_version = pkg
-        .metadata
+    // Get Wireshark version from workspace metadata
+    let wireshark_version = metadata
+        .workspace_metadata
         .get("wireshark_version")
         .and_then(|v| v.as_str())
-        .expect("Wireshark version must be set in Cargo.toml under [package.metadata]");
+        .expect("Wireshark version must be set in Cargo.toml under [workspace.metadata]");
 
     let ws_parts: Vec<_> = wireshark_version.split('.').collect();
     let ws_major: i32 = ws_parts[0].parse().expect("Invalid major version");
