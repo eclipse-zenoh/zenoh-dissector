@@ -125,7 +125,11 @@ fn generate_bindings() -> Result<()> {
             {
                 // Extract major.minor version (e.g., "4.6.0" -> "4.6")
                 let version_parts: Vec<_> = WIRESHARK_VERSION.split('.').collect();
-                let major_minor = format!("{}.{}", version_parts[0], version_parts.get(1).unwrap_or(&"0"));
+                let major_minor = format!(
+                    "{}.{}",
+                    version_parts[0],
+                    version_parts.get(1).unwrap_or(&"0")
+                );
 
                 // Try to find the vcpkg directory with glob pattern
                 let base_path = format!("C:\\Development\\wireshark-x64-libs-{}", major_minor);
@@ -135,17 +139,27 @@ fn generate_bindings() -> Result<()> {
                     if let Ok(entries) = std::fs::read_dir("C:\\Development") {
                         for entry in entries.flatten() {
                             let path = entry.path();
-                            if path.is_dir() && path.file_name()
-                                .and_then(|n| n.to_str())
-                                .map(|s| s.starts_with(&format!("wireshark-x64-libs-{}", major_minor)))
-                                .unwrap_or(false)
+                            if path.is_dir()
+                                && path
+                                    .file_name()
+                                    .and_then(|n| n.to_str())
+                                    .map(|s| {
+                                        s.starts_with(&format!(
+                                            "wireshark-x64-libs-{}",
+                                            major_minor
+                                        ))
+                                    })
+                                    .unwrap_or(false)
                             {
-                                let pkg_config_path = path.join("vcpkg-export")
+                                let pkg_config_path = path
+                                    .join("vcpkg-export")
                                     .read_dir()
                                     .ok()
                                     .and_then(|mut dirs| dirs.next())
                                     .and_then(|e| e.ok())
-                                    .map(|e| e.path().join("installed\\x64-windows\\lib\\pkgconfig"));
+                                    .map(|e| {
+                                        e.path().join("installed\\x64-windows\\lib\\pkgconfig")
+                                    });
 
                                 if let Some(pkg_path) = pkg_config_path {
                                     if pkg_path.exists() {
