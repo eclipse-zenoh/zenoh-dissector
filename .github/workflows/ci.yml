@@ -95,9 +95,11 @@ jobs:
 
       - name: Clippy
         run: cargo clippy --all-targets -- --deny warnings
+        env:
+          WIRESHARK_LIB_DIR: ${{ matrix.platform == 'macos' && github.workspace || '' }}
 
       - name: Build
-        run: cargo build --release
+        run: cargo build
         env:
           WIRESHARK_LIB_DIR: ${{ matrix.platform == 'macos' && github.workspace || '' }}
 
@@ -132,8 +134,8 @@ jobs:
             "libzenoh_dissector.so"
           }
 
-          mkdir $plugin_dir
-          cp $"./target/release/($lib_name)" $"($plugin_dir)/($plugin_name)"
+          mkdir -v $plugin_dir
+          cp -v $"./target/debug/($lib_name)" $"($plugin_dir)/($plugin_name)"
 
       - name: Test the sample data
         shell: nu {0}
