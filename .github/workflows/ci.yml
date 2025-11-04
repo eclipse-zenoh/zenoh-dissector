@@ -107,7 +107,10 @@ jobs:
         shell: nu {0}
         run: |
           let platform = "${{ matrix.platform }}"
-          let base_version = "${{ steps.wireshark-version.outputs.version }}"
+          let full_version = "${{ steps.wireshark-version.outputs.version }}"
+
+          # Extract major.minor version (e.g. 4.6.0 -> 4.6)
+          let base_version = ($full_version | split row '.' | first 2 | str join '.')
 
           # macOS uses dash format (e.g. 4-4 instead of 4.4)
           let version = if $platform == "macos" {
