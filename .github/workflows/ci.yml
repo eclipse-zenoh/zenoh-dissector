@@ -10,6 +10,8 @@ on:
 
 env:
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+  RUNNER_TEMP: D:\a\_temp
+  RUNNER_WORKSPACE: D:\a\workspace
 
 jobs:
   markdown_lint:
@@ -77,6 +79,13 @@ jobs:
           ln -snf $(find /Applications/Wireshark.app/Contents/Frameworks -name "libwireshark.*.dylib" | tail -n 1) libwireshark.dylib
         env:
           WIRESHARK_LIB_DIR: ${{ github.workspace }}
+
+      - name: Enable long path support on Windows
+        if: matrix.platform == 'windows'
+        run: |
+          reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f
+          git config --system core.longpaths true
+        shell: powershell
 
       - name: Install Wireshark (Windows)
         if: matrix.platform == 'windows'
