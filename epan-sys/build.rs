@@ -90,7 +90,8 @@ fn link_wireshark() -> Result<()> {
             "Release"
         };
 
-        let lib_dir = WIRESHARK_BUILD_DIR.join(format!("run\\{}", build_config));
+        // Platform-independent path construction
+        let lib_dir = WIRESHARK_BUILD_DIR.join("run").join(build_config);
 
         // If library directory doesn't exist, build Wireshark
         if !lib_dir.exists() {
@@ -237,13 +238,12 @@ fn build_wireshark() -> Result<()> {
 
     #[cfg(target_os = "windows")]
     {
-        std::fs::create_dir_all(&*WIRESHARK_BUILD_DIR)?;
         env::set_var("WIRESHARK_BASE_DIR", "C:\\wsbuild");
 
-        // Use short path for CMake download/extraction to avoid long path errors
-        let download_dir = PathBuf::from("C:\\wsbuild\\dl");
-        std::fs::create_dir_all(&download_dir)?;
-        env::set_var("WIRESHARK_DOWNLOAD_DIR", &download_dir);
+        // Use short build path to avoid long path issues
+        // The source stays at original location, only build dir is short
+        let short_build = PathBuf::from("C:\\wsbuild\\b");
+        std::fs::create_dir_all(&short_build)?;
 
         let mut args = vec![
             WIRESHARK_SOURCE_DIR.to_string_lossy().to_string(),
@@ -251,8 +251,6 @@ fn build_wireshark() -> Result<()> {
             "Visual Studio 17 2022".to_string(),
             "-A".to_string(),
             "x64".to_string(),
-            // Use short path for artifact downloads to avoid long path issues
-            format!("-DWIRESHARK_DOWNLOAD_DIR={}", download_dir.display()),
         ];
 
         for (key, value) in get_cmake_build_options() {
@@ -261,7 +259,7 @@ fn build_wireshark() -> Result<()> {
 
         eprintln!("Configuring with CMake...");
         Command::new("cmake")
-            .current_dir(&*WIRESHARK_BUILD_DIR)
+            .current_dir(&short_build)
             .args(&args)
             .status()?
             .success()
@@ -270,7 +268,7 @@ fn build_wireshark() -> Result<()> {
 
         eprintln!("Building with CMake (config: {})...", build_config);
         Command::new("cmake")
-            .current_dir(&*WIRESHARK_BUILD_DIR)
+            .current_dir(&short_build)
             .args([
                 "--build",
                 ".",
@@ -283,6 +281,12 @@ fn build_wireshark() -> Result<()> {
             .success()
             .then_some(())
             .ok_or_else(|| anyhow::anyhow!("CMake build failed"))?;
+
+        // Update WIRESHARK_BUILD_DIR for linking stage
+        env::set_var(
+            "WIRESHARK_BUILD_DIR",
+            short_build.to_string_lossy().to_string(),
+        );
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -370,7 +374,11 @@ fn generate_bindings() -> Result<()> {
                                     .and_then(|mut dirs| dirs.next())
                                     .and_then(|e| e.ok())
                                     .map(|e| {
-                                        e.path().join("installed\\x64-windows\\lib\\pkgconfig")
+                                        e.path()
+                                            .join("installed")
+                                            .join("x64-windows")
+                                            .join("lib")
+                                            .join("pkgconfig")
                                     })
                                 {
                                     if pkg_path.exists() {
