@@ -240,12 +240,19 @@ fn build_wireshark() -> Result<()> {
         std::fs::create_dir_all(&*WIRESHARK_BUILD_DIR)?;
         env::set_var("WIRESHARK_BASE_DIR", "C:\\wsbuild");
 
+        // Use short path for CMake download/extraction to avoid long path errors
+        let download_dir = PathBuf::from("C:\\wsbuild\\dl");
+        std::fs::create_dir_all(&download_dir)?;
+        env::set_var("WIRESHARK_DOWNLOAD_DIR", &download_dir);
+
         let mut args = vec![
             WIRESHARK_SOURCE_DIR.to_string_lossy().to_string(),
             "-G".to_string(),
             "Visual Studio 17 2022".to_string(),
             "-A".to_string(),
             "x64".to_string(),
+            // Use short path for artifact downloads to avoid long path issues
+            format!("-DWIRESHARK_DOWNLOAD_DIR={}", download_dir.display()),
         ];
 
         for (key, value) in get_cmake_build_options() {
