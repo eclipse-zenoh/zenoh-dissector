@@ -187,46 +187,6 @@ fn download_wireshark(skip_existing: bool) -> Result<()> {
     Ok(())
 }
 
-fn get_cmake_build_options() -> Vec<(&'static str, &'static str)> {
-    vec![
-        // Disable all executables
-        ("BUILD_androiddump", "OFF"),
-        ("BUILD_capinfos", "OFF"),
-        ("BUILD_captype", "OFF"),
-        ("BUILD_ciscodump", "OFF"),
-        ("BUILD_corbaidl2wrs", "OFF"),
-        ("BUILD_dcerpcidl2wrs", "OFF"),
-        ("BUILD_dftest", "OFF"),
-        ("BUILD_dpauxmon", "OFF"),
-        ("BUILD_dumpcap", "OFF"),
-        ("BUILD_editcap", "OFF"),
-        ("BUILD_etwdump", "OFF"),
-        ("BUILD_logray", "OFF"),
-        ("BUILD_mergecap", "OFF"),
-        ("BUILD_randpkt", "OFF"),
-        ("BUILD_randpktdump", "OFF"),
-        ("BUILD_rawshark", "OFF"),
-        ("BUILD_reordercap", "OFF"),
-        ("BUILD_sshdump", "OFF"),
-        ("BUILD_text2pcap", "OFF"),
-        ("BUILD_tfshark", "OFF"),
-        ("BUILD_tshark", "OFF"),
-        ("BUILD_wifidump", "OFF"),
-        ("BUILD_wireshark", "OFF"),
-        ("BUILD_xxx2deb", "OFF"),
-        // Disable optional features
-        ("ENABLE_KERBEROS", "OFF"),
-        ("ENABLE_SBC", "OFF"),
-        ("ENABLE_SPANDSP", "OFF"),
-        ("ENABLE_BCG729", "OFF"),
-        ("ENABLE_AMRNB", "OFF"),
-        ("ENABLE_ILBC", "OFF"),
-        ("ENABLE_LIBXML2", "OFF"),
-        ("ENABLE_OPUS", "OFF"),
-        ("ENABLE_SINSP", "OFF"),
-    ]
-}
-
 #[cfg(target_os = "windows")]
 fn build_wireshark() -> Result<()> {
     eprintln!("Building Wireshark on Windows using PowerShell...");
