@@ -51,6 +51,7 @@ lazy_static! {
 }
 
 fn main() -> Result<()> {
+    eprintln!("Wireshark version: {}", *WIRESHARK_VERSION);
     eprintln!("Wireshark source directory: {:?}", *WIRESHARK_SOURCE_DIR);
     eprintln!("Wireshark build directory: {:?}", *WIRESHARK_BUILD_DIR);
 
@@ -226,84 +227,68 @@ fn get_cmake_build_options() -> Vec<(&'static str, &'static str)> {
     ]
 }
 
+#[cfg(target_os = "windows")]
 fn build_wireshark() -> Result<()> {
-    eprintln!("Building Wireshark...");
+    eprintln!("Building Wireshark on Windows using PowerShell...");
 
-    // Determine build configuration based on Rust profile
+    env::set_var("WIRESHARK_BASE_DIR", "C:\\wsbuild");
+
+    // Get the directory where build.ps1 is located
+    let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
+    let script_path = PathBuf::from(&manifest_dir)
+        .join("epan-sys")
+        .join("scripts")
+        .join("build.ps1");
+
+    if !script_path.exists() {
+        anyhow::bail!("build.ps1 not found at {:?}", script_path);
+    }
+
+    eprintln!("Running PowerShell script from: {:?}", script_path);
+
+    let status = Command::new("powershell")
+        .args([
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            &script_path.to_string_lossy(),
+            "-WiresharkVersion",
+            &*WIRESHARK_VERSION,
+        ])
+        .status()?;
+
+    if !status.success() {
+        anyhow::bail!("PowerShell build script failed");
+    }
+
+    eprintln!("Wireshark build completed successfully");
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn build_wireshark() -> Result<()> {
+    eprintln!("Building Wireshark on Unix...");
+
     let build_config = if cfg!(debug_assertions) {
         "Debug"
     } else {
         "Release"
     };
 
-    #[cfg(target_os = "windows")]
-    {
-        env::set_var("WIRESHARK_BASE_DIR", "C:\\wsbuild");
+    let mut config = cmake::Config::new(&*WIRESHARK_SOURCE_DIR);
 
-        // Use short build path to avoid long path issues
-        // The source stays at original location, only build dir is short
-        let short_build = PathBuf::from("C:\\wsbuild\\b");
-        std::fs::create_dir_all(&short_build)?;
+    config.define("CMAKE_BUILD_TYPE", build_config);
 
-        let mut args = vec![
-            WIRESHARK_SOURCE_DIR.to_string_lossy().to_string(),
-            "-G".to_string(),
-            "Visual Studio 17 2022".to_string(),
-            "-A".to_string(),
-            "x64".to_string(),
-        ];
-
-        for (key, value) in get_cmake_build_options() {
-            args.push(format!("-D{}={}", key, value));
-        }
-
-        eprintln!("Configuring with CMake...");
-        Command::new("cmake")
-            .current_dir(&short_build)
-            .args(&args)
-            .status()?
-            .success()
-            .then_some(())
-            .ok_or_else(|| anyhow::anyhow!("CMake configuration failed"))?;
-
-        eprintln!("Building with CMake (config: {})...", build_config);
-        Command::new("cmake")
-            .current_dir(&short_build)
-            .args([
-                "--build",
-                ".",
-                "--config",
-                build_config,
-                "--target",
-                "ALL_BUILD",
-            ])
-            .status()?
-            .success()
-            .then_some(())
-            .ok_or_else(|| anyhow::anyhow!("CMake build failed"))?;
-
-        // Update WIRESHARK_BUILD_DIR for linking stage
-        env::set_var(
-            "WIRESHARK_BUILD_DIR",
-            short_build.to_string_lossy().to_string(),
-        );
+    for (key, value) in get_cmake_build_options() {
+        config.define(key, value);
     }
 
-    #[cfg(not(target_os = "windows"))]
-    {
-        let mut config = cmake::Config::new(&*WIRESHARK_SOURCE_DIR);
-
-        config.define("CMAKE_BUILD_TYPE", build_config);
-
-        for (key, value) in get_cmake_build_options() {
-            config.define(key, value);
-        }
-
-        config
-            .out_dir(&*WIRESHARK_SOURCE_DIR)
-            .very_verbose(true)
-            .build();
-    }
+    config
+        .out_dir(&*WIRESHARK_SOURCE_DIR)
+        .very_verbose(true)
+        .build();
 
     eprintln!("Wireshark build completed successfully");
     Ok(())
