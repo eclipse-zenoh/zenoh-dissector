@@ -99,6 +99,34 @@ fn link_wireshark() -> Result<()> {
             eprintln!("Wireshark library directory not found, building...");
             download_wireshark(true)?;
             build_wireshark()?;
+
+            // Wait a bit for files to be written
+            std::thread::sleep(std::time::Duration::from_secs(2));
+
+            // Verify the directory exists
+            if !lib_dir.exists() {
+                anyhow::bail!(
+                    "Wireshark library directory not found at {:?} after build. \
+                     Wireshark build may have failed.",
+                    lib_dir
+                );
+            }
+        }
+
+        // Verify the libraries actually exist
+        let wireshark_lib = lib_dir.join("wireshark.lib");
+        let wiretap_lib = lib_dir.join("wiretap.lib");
+        let wsutil_lib = lib_dir.join("wsutil.lib");
+
+        if !wireshark_lib.exists() {
+            eprintln!("ERROR: wireshark.lib not found at {:?}", wireshark_lib);
+            eprintln!("Contents of {:?}:", lib_dir);
+            if let Ok(entries) = std::fs::read_dir(&lib_dir) {
+                for entry in entries.flatten() {
+                    eprintln!("  {:?}", entry.path());
+                }
+            }
+            anyhow::bail!("wireshark.lib not found");
         }
 
         eprintln!("Found Wireshark libraries at: {:?}", lib_dir);

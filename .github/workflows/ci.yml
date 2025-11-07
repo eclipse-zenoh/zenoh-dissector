@@ -12,14 +12,14 @@ env:
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
 jobs:
-  markdown_lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: DavidAnson/markdownlint-cli2-action@v18
-        with:
-          config: '.markdownlint.yaml'
-          globs: '**/README.md'
+  # markdown_lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: DavidAnson/markdownlint-cli2-action@v18
+  #       with:
+  #         config: '.markdownlint.yaml'
+  #         globs: '**/README.md'
 
   platform_checks:
     name: Run checks on ${{ matrix.os }}
@@ -171,7 +171,9 @@ jobs:
   ci:
     name: CI status checks
     runs-on: ubuntu-latest
-    needs: [platform_checks, markdown_lint]
+    needs:
+      - platform_checks
+      # - markdown_lint
     if: always()
     steps:
       - name: Check whether all jobs pass

@@ -102,3 +102,17 @@ cmake --build . --config $BuildConfig --target ALL_BUILD
 Pop-Location
 
 Write-Host "Wireshark build completed in $BuildDir"
+
+# At the end of build.ps1, verify libraries were created
+$DebugDir = Join-Path $BuildDir "run\$BuildConfig"
+if (Test-Path $DebugDir) {
+    Write-Host "Build output directory exists: $DebugDir"
+    Get-ChildItem $DebugDir -Filter "*.lib" | ForEach-Object { Write-Host "  Found: $($_.Name)" }
+} else {
+    Write-Host "ERROR: Build output directory not found at $DebugDir"
+    Write-Host "Contents of $($BuildDir):"
+    Get-ChildItem $BuildDir | ForEach-Object { Write-Host "  $_" }
+    exit 1
+}
+
+Write-Host "Wireshark build completed"
