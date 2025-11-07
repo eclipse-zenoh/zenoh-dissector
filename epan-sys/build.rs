@@ -196,7 +196,6 @@ fn build_wireshark() -> Result<()> {
     // Get the directory where build.ps1 is located
     let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
     let script_path = PathBuf::from(&manifest_dir)
-        .join("epan-sys")
         .join("scripts")
         .join("build.ps1");
 
