@@ -61,39 +61,12 @@ cmake $SrcDir `
     -DBUILD_wireshark=OFF `
     -DBUILD_tshark=OFF `
     -DBUILD_wireshark_cli=OFF `
-    -DBUILD_androiddump=OFF `
-    -DBUILD_capinfos=OFF `
-    -DBUILD_captype=OFF `
-    -DBUILD_ciscodump=OFF `
-    -DBUILD_corbaidl2wrs=OFF `
-    -DBUILD_dcerpcidl2wrs=OFF `
-    -DBUILD_dftest=OFF `
-    -DBUILD_dpauxmon=OFF `
-    -DBUILD_dumpcap=OFF `
-    -DBUILD_editcap=OFF `
-    -DBUILD_etwdump=OFF `
-    -DBUILD_logray=OFF `
-    -DBUILD_mergecap=OFF `
-    -DBUILD_randpkt=OFF `
-    -DBUILD_randpktdump=OFF `
-    -DBUILD_rawshark=OFF `
-    -DBUILD_reordercap=OFF `
-    -DBUILD_sshdump=OFF `
-    -DBUILD_text2pcap=OFF `
-    -DBUILD_tfshark=OFF `
-    -DBUILD_tshark=OFF `
-    -DBUILD_wifidump=OFF `
-    -DBUILD_wireshark=OFF `
-    -DBUILD_xxx2deb=OFF `
     -DENABLE_KERBEROS=OFF `
-    -DENABLE_SBC=OFF `
     -DENABLE_SPANDSP=OFF `
     -DENABLE_BCG729=OFF `
     -DENABLE_AMRNB=OFF `
     -DENABLE_ILBC=OFF `
-    -DENABLE_LIBXML2=OFF `
-    -DENABLE_OPUS=OFF `
-    -DENABLE_SINSP=OFF
+    -DCMAKE_INSTALL_PREFIX="$BuildDir\install"
 
 # Build all with the specified config
 Write-Host "Building Wireshark with config: $BuildConfig"
