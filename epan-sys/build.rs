@@ -193,6 +193,13 @@ fn build_wireshark() -> Result<()> {
 
     env::set_var("WIRESHARK_BASE_DIR", "C:\\wsbuild");
 
+    // Determine build configuration based on Rust profile
+    let build_config = if cfg!(debug_assertions) {
+        "Debug"
+    } else {
+        "Release"
+    };
+
     // Get the directory where build.ps1 is located
     let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
     let script_path = PathBuf::from(&manifest_dir)
@@ -204,6 +211,7 @@ fn build_wireshark() -> Result<()> {
     }
 
     eprintln!("Running PowerShell script from: {:?}", script_path);
+    eprintln!("Build config: {}", build_config);
 
     let status = Command::new("powershell")
         .args([
@@ -215,6 +223,8 @@ fn build_wireshark() -> Result<()> {
             &script_path.to_string_lossy(),
             "-WiresharkVersion",
             &*WIRESHARK_VERSION,
+            "-BuildConfig",
+            build_config,
         ])
         .status()?;
 
