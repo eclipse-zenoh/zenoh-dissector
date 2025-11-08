@@ -108,7 +108,7 @@ jobs:
         if: matrix.platform == 'windows'
         shell: powershell
         run: |
-          & .\epan-sys\scripts\build.ps1 -WiresharkVersion "${{ steps.wireshark-version.outputs.version }}" -BuildConfig "Debug"
+          & .\epan-sys\scripts\build.ps1 -WiresharkVersion "${{ steps.wireshark-version.outputs.version }}" -BuildConfig "Release"
 
       # - name: Build
       #   run: cargo build
