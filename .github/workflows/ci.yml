@@ -110,64 +110,64 @@ jobs:
         run: |
           & .\epan-sys\scripts\build.ps1 -WiresharkVersion "${{ steps.wireshark-version.outputs.version }}" -BuildConfig "Release"
 
-      # - name: Build
-      #   run: cargo build
-      #   env:
-      #     WIRESHARK_LIB_DIR: ${{ matrix.platform == 'macos' && github.workspace || '' }}
-      #
-      # - name: Place the plugin
-      #   shell: nu {0}
-      #   run: |
-      #     let platform = "${{ matrix.platform }}"
-      #     let full_version = "${{ steps.wireshark-version.outputs.version }}"
-      #
-      #     # Extract major.minor version (e.g. 4.6.0 -> 4.6)
-      #     let base_version = ($full_version | split row '.' | first 2 | str join '.')
-      #
-      #     # macOS uses dash format (e.g. 4-4 instead of 4.4)
-      #     let version = if $platform == "macos" {
-      #       $base_version | str replace '.' '-'
-      #     } else {
-      #       $base_version
-      #     }
-      #
-      #     let plugin_dir = if $platform == "windows" {
-      #       $"($env.APPDATA)/Wireshark/plugins/($version)/epan"
-      #     } else {
-      #       $"($env.HOME)/.local/lib/wireshark/plugins/($version)/epan"
-      #     }
-      #
-      #     let lib_name = match $platform {
-      #       "windows" => "zenoh_dissector.dll",
-      #       "macos" => "libzenoh_dissector.dylib",
-      #       _ => "libzenoh_dissector.so"
-      #     }
-      #
-      #     let plugin_name = if $platform == "windows" {
-      #       "zenoh_dissector.dll"
-      #     } else {
-      #       "libzenoh_dissector.so"
-      #     }
-      #
-      #     mkdir -v $plugin_dir
-      #     cp -v $"./target/debug/($lib_name)" $"($plugin_dir)/($plugin_name)"
-      #
-      # - name: Test the sample data
-      #   shell: nu {0}
-      #   run: |
-      #     let platform = "${{ matrix.platform }}"
-      #
-      #     let output = if $platform == "windows" {
-      #       ^'C:/Program Files/Wireshark/tshark.exe' -r ./assets/sample-data.pcap
-      #     } else {
-      #       tshark -r ./assets/sample-data.pcap
-      #     }
-      #
-      #     let zenoh_count = ($output | lines | where {|line| $line =~ "Zenoh"} | length)
-      #
-      #     if $zenoh_count != 7 {
-      #       error make {msg: $"Expected 7 Zenoh packets, found ($zenoh_count)"}
-      #     }
+      - name: Build
+        run: cargo build
+        env:
+          WIRESHARK_LIB_DIR: ${{ matrix.platform == 'windows' && 'C:\\wsbuild\\build\\run\\Release' || (matrix.platform == 'macos' && github.workspace || '') }}
+
+      - name: Place the plugin
+        shell: nu {0}
+        run: |
+          let platform = "${{ matrix.platform }}"
+          let full_version = "${{ steps.wireshark-version.outputs.version }}"
+
+          # Extract major.minor version (e.g. 4.6.0 -> 4.6)
+          let base_version = ($full_version | split row '.' | first 2 | str join '.')
+
+          # macOS uses dash format (e.g. 4-4 instead of 4.4)
+          let version = if $platform == "macos" {
+            $base_version | str replace '.' '-'
+          } else {
+            $base_version
+          }
+
+          let plugin_dir = if $platform == "windows" {
+            $"($env.APPDATA)/Wireshark/plugins/($version)/epan"
+          } else {
+            $"($env.HOME)/.local/lib/wireshark/plugins/($version)/epan"
+          }
+
+          let lib_name = match $platform {
+            "windows" => "zenoh_dissector.dll",
+            "macos" => "libzenoh_dissector.dylib",
+            _ => "libzenoh_dissector.so"
+          }
+
+          let plugin_name = if $platform == "windows" {
+            "zenoh_dissector.dll"
+          } else {
+            "libzenoh_dissector.so"
+          }
+
+          mkdir -v $plugin_dir
+          cp -v $"./target/debug/($lib_name)" $"($plugin_dir)/($plugin_name)"
+
+      - name: Test the sample data
+        shell: nu {0}
+        run: |
+          let platform = "${{ matrix.platform }}"
+
+          let output = if $platform == "windows" {
+            ^'C:/Program Files/Wireshark/tshark.exe' -r ./assets/sample-data.pcap
+          } else {
+            tshark -r ./assets/sample-data.pcap
+          }
+
+          let zenoh_count = ($output | lines | where {|line| $line =~ "Zenoh"} | length)
+
+          if $zenoh_count != 7 {
+            error make {msg: $"Expected 7 Zenoh packets, found ($zenoh_count)"}
+          }
 
   # NOTE: In GitHub repository settings, the "Require status checks to pass
   # before merging" branch protection rule ensures that commits are only merged
