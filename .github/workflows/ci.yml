@@ -100,16 +100,16 @@ jobs:
           New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1 -Force
           "
 
-      - name: Clippy
-        run: cargo clippy --all-targets -- --deny warnings
-        env:
-          WIRESHARK_LIB_DIR: ${{ matrix.platform == 'macos' && github.workspace || '' }}
-
       - name: Build Wireshark from source (Windows)
         if: matrix.platform == 'windows'
         shell: powershell
         run: |
           & .\epan-sys\scripts\build.ps1 -WiresharkVersion "${{ steps.wireshark-version.outputs.version }}" -BuildConfig "Release"
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- --deny warnings
+        env:
+          WIRESHARK_LIB_DIR: ${{ matrix.platform == 'macos' && github.workspace || '' }}
 
       - name: Build
         run: cargo build
