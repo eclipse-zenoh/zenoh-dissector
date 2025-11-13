@@ -75,6 +75,8 @@ jobs:
         run: |
           brew install --cask wireshark
           ln -snf $(find /Applications/Wireshark.app/Contents/Frameworks -name "libwireshark.*.dylib" | tail -n 1) libwireshark.dylib
+          ln -snf $(find /Applications/Wireshark.app/Contents/Frameworks -name "libwiretap.*.dylib" | tail -n 1) libwiretap.dylib
+          ln -snf $(find /Applications/Wireshark.app/Contents/Frameworks -name "libwsutil.*.dylib" | tail -n 1) libwsutil.dylib
         env:
           WIRESHARK_LIB_DIR: ${{ github.workspace }}
 
