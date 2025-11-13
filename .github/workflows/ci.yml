@@ -182,7 +182,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - platform_checks
-      # - markdown_lint
+      - markdown_lint
     if: always()
     steps:
       - name: Check whether all jobs pass
