@@ -115,8 +115,8 @@ fn link_wireshark() -> Result<()> {
 
         // Verify the libraries actually exist
         let wireshark_lib = lib_dir.join("wireshark.lib");
-        let wiretap_lib = lib_dir.join("wiretap.lib");
-        let wsutil_lib = lib_dir.join("wsutil.lib");
+        let _wiretap_lib = lib_dir.join("wiretap.lib");
+        let _wsutil_lib = lib_dir.join("wsutil.lib");
 
         if !wireshark_lib.exists() {
             eprintln!("ERROR: wireshark.lib not found at {:?}", wireshark_lib);
@@ -262,6 +262,20 @@ fn build_wireshark() -> Result<()> {
 
     eprintln!("Wireshark build completed successfully");
     Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn get_cmake_build_options() -> Vec<(&'static str, &'static str)> {
+    vec![
+        ("BUILD_wireshark", "OFF"),
+        ("BUILD_tshark", "OFF"),
+        ("BUILD_wireshark_cli", "OFF"),
+        ("ENABLE_KERBEROS", "OFF"),
+        ("ENABLE_SPANDSP", "OFF"),
+        ("ENABLE_BCG729", "OFF"),
+        ("ENABLE_AMRNB", "OFF"),
+        ("ENABLE_ILBC", "OFF"),
+    ]
 }
 
 #[cfg(not(target_os = "windows"))]
