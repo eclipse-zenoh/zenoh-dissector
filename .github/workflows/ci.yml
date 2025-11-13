@@ -51,12 +51,12 @@ jobs:
           let version = (open Cargo.toml | get workspace.metadata.wireshark_version)
           $"version=($version)" | save --append $env.GITHUB_OUTPUT
 
-      # - name: Install Rust components
-      #   run: |
-      #     rustup component add rustfmt clippy
+      - name: Install Rust components
+        run: |
+          rustup component add rustfmt clippy
 
-      # - name: Code format check
-      #   run: cargo fmt -- --check
+      - name: Code format check
+        run: cargo fmt -- --check
 
       - name: Install Wireshark (Ubuntu)
         if: matrix.platform == 'linux'
