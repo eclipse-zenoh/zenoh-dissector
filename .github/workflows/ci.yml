@@ -12,14 +12,14 @@ env:
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
 jobs:
-  # markdown_lint:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: DavidAnson/markdownlint-cli2-action@v18
-  #       with:
-  #         config: '.markdownlint.yaml'
-  #         globs: '**/README.md'
+  markdown_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v18
+        with:
+          config: '.markdownlint.yaml'
+          globs: '**/README.md'
 
   platform_checks:
     name: Run checks on ${{ matrix.os }}
@@ -28,12 +28,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - os: ubuntu-24.04
-          #   platform: linux
-          # - os: ubuntu-22.04
-          #   platform: linux
-          # - os: macos-latest
-          #   platform: macos
+          - os: ubuntu-24.04
+            platform: linux
+          - os: ubuntu-22.04
+            platform: linux
+          - os: macos-latest
+            platform: macos
           - os: windows-2022
             platform: windows
 
