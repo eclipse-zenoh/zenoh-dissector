@@ -9,21 +9,31 @@ pub struct ZenohProtocol;
 
 mod impl_for_zenoh_protocol {
     use super::ZenohProtocol;
-    use crate::header_field::{FieldKind, HeaderFieldMap, Registration};
+    use crate::header_field::{FieldKind, HeaderField, HeaderFieldMap, Registration};
     use zenoh_protocol::transport::TransportMessage;
 
     impl Registration for ZenohProtocol {
         fn generate_hf_map(prefix: &str) -> HeaderFieldMap {
-            let mut hf_map =
-                HeaderFieldMap::new().add(prefix.to_string(), "ZenohProtocol", FieldKind::Branch);
-            hf_map.extend(TransportMessage::generate_hf_map(prefix));
+            // Start from TransportMessage's map (ARM 1 registers the prefix as
+            // "TransportMessage"), then overwrite the root entry so that the
+            // "zenoh" field is labelled "ZenohProtocol" in filter autocomplete.
+            let mut hf_map = TransportMessage::generate_hf_map(prefix);
+            hf_map.insert(
+                prefix.to_string(),
+                HeaderField {
+                    name: "ZenohProtocol".into(),
+                    kind: FieldKind::Branch,
+                },
+            );
             hf_map
         }
 
         fn generate_subtree_names(prefix: &str) -> Vec<String> {
-            let mut names = vec![prefix.to_string()];
-            names.extend(TransportMessage::generate_subtree_names(prefix));
-            names
+            // TransportMessage (ARM 1) already pushes `prefix` into the subtree
+            // list via its expand section, so we must not push it again here or
+            // two ETTs would be registered for the same key and the first would
+            // be silently dropped.
+            TransportMessage::generate_subtree_names(prefix)
         }
     }
 }
@@ -468,6 +478,7 @@ mod impl_for_network {
     // NetworkMessage
     impl_for_struct! {
         struct NetworkMessage {
+            reliability: Reliability,
             #[dissect(expand)]
             body: NetworkBody,
         }
