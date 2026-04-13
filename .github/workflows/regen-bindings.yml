@@ -86,12 +86,13 @@ jobs:
           name: bindings-${{ matrix.platform }}
           path: ${{ matrix.output }}
 
-  commit:
-    name: Commit regenerated bindings
+  pr:
+    name: Open PR with regenerated bindings
     runs-on: ubuntu-latest
     needs: regen
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -110,11 +111,17 @@ jobs:
           name: bindings-windows
           path: epan-sys/
 
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add epan-sys/bindings.rs epan-sys/bindings_windows.rs
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: regenerate epan-sys bindings"
-          git push
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: regenerate epan-sys bindings"
+          branch: chore/regen-bindings
+          title: "chore: regenerate epan-sys bindings"
+          body: |
+            Automated regeneration of `epan-sys` FFI bindings triggered by @${{ github.actor }}.
+
+            - `epan-sys/bindings.rs` — regenerated on Ubuntu 24.04
+            - `epan-sys/bindings_windows.rs` — regenerated on Windows 2022
+
+            Triggered from: `${{ github.ref_name }}`
+          delete-branch: true
