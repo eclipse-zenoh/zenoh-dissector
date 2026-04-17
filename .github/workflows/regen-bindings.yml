@@ -42,7 +42,7 @@ jobs:
         run: |
           sudo apt install -y software-properties-common
           sudo add-apt-repository -y ppa:wireshark-dev/stable-staging
-          sudo apt install -y wireshark-dev
+          sudo apt install -y wireshark-dev=${{ steps.wireshark-version.outputs.version }}-*
 
       - name: Install Wireshark dependencies (Windows)
         if: matrix.platform == 'windows'
@@ -57,7 +57,7 @@ jobs:
             }
           }
 
-          choco install -y --no-progress wireshark --version $"${{ steps.wireshark-version.outputs.version }}.0"
+          choco install -y --no-progress wireshark --version $"${{ steps.wireshark-version.outputs.version }}"
 
       - name: Enable long path support (Windows)
         if: matrix.platform == 'windows'
@@ -75,10 +75,15 @@ jobs:
       - name: Install bindgen-cli
         run: cargo install bindgen-cli --locked
 
-      - name: Regenerate bindings
+      - name: Regenerate bindings (Linux)
+        if: matrix.platform == 'linux'
+        run: cargo build -p epan-sys -F bindgen
+
+      - name: Regenerate bindings (Windows)
+        if: matrix.platform == 'windows'
         run: cargo build -p epan-sys -F bindgen
         env:
-          WIRESHARK_LIB_DIR: ${{ matrix.platform == 'windows' && 'C:\\wsbuild\\build\\run\\Release' || '' }}
+          WIRESHARK_LIB_DIR: C:\wsbuild\build\run\Release
 
       - name: Upload bindings artifact
         uses: actions/upload-artifact@v4
@@ -115,7 +120,7 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           commit-message: "chore: regenerate epan-sys bindings"
-          branch: chore/regen-bindings
+          branch: chore/regen-bindings-${{ github.run_id }}
           title: "chore: regenerate epan-sys bindings"
           body: |
             Automated regeneration of `epan-sys` FFI bindings triggered by @${{ github.actor }}.
