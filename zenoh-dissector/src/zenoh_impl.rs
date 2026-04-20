@@ -105,7 +105,7 @@ mod impl_for_transport {
             ext_mlink: Option<MultiLinkSyn>,
             ext_lowlatency: Option<LowLatency>,
             ext_compression: Option<Compression>,
-            ext_south: Option<RemoteBound>,
+            ext_remote_bound: Option<RemoteBound>,
         }
     }
 
@@ -120,7 +120,7 @@ mod impl_for_transport {
             ext_mlink: Option<MultiLinkAck>,
             ext_lowlatency: Option<LowLatency>,
             ext_compression: Option<Compression>,
-            ext_south: Option<RemoteBound>,
+            ext_remote_bound: Option<RemoteBound>,
         }
     }
 
