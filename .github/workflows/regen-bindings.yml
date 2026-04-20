@@ -90,7 +90,7 @@ jobs:
 
       - name: Regenerate bindings (Linux)
         if: matrix.platform == 'linux'
-        run: cargo build -p epan-sys -F bindgen
+        run: cargo build -p epan-sys -F bindgen -vv
 
       - name: Set PKG_CONFIG_PATH for glib-2.0 (Windows)
         if: matrix.platform == 'windows'
@@ -142,7 +142,7 @@ jobs:
 
       - name: Regenerate bindings (Windows)
         if: matrix.platform == 'windows'
-        run: cargo build -p epan-sys -F bindgen
+        run: cargo build -p epan-sys -F bindgen -vv
         env:
           WIRESHARK_LIB_DIR: C:\wsbuild\build\run\Release
 
