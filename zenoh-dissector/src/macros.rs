@@ -172,6 +172,8 @@ macro_rules! impl_for_struct {
             fn add_to_tree(&self, prefix: &str, args: &TreeArgs) -> Result<()> {
                 $(
                     let hf_index = args.get_hf(&format!("{prefix}.{}", stringify!{$field_name}))?;
+                    let field_key = format!("{prefix}.{}", stringify!{$field_name});
+                    let (field_start, field_len) = args.field_span(&field_key);
                     unsafe {
                         let field_name_c_str = std::ffi::CString::new(format!("{:?}", self.$field_name)).unwrap();
                         // The codec doesn't expose per-field byte offsets, so we prevent wireshark
@@ -180,8 +182,8 @@ macro_rules! impl_for_struct {
                             args.tree,
                             hf_index,
                             args.tvb,
-                            args.start as _,
-                            0,
+                            field_start as _,
+                            field_len as _,
                             field_name_c_str.as_ptr(),
                         );
                     }
@@ -189,14 +191,35 @@ macro_rules! impl_for_struct {
 
                 // HACK(fuzzypixelz): recursively created trees will have an incorrect length. Only
                 // the Transport layer has an accurate length.
-                let args = $crate::tree::TreeArgs { length: 0, ..*args };
+                let args = $crate::tree::TreeArgs { length: 0, local_spans: args.local_spans.clone(), ..*args };
 
                 $(
-                    for item in &self.$expand_vec_as_field {
-                        item.add_to_tree(
-                            &format!("{prefix}.{}", $expand_vec_as),
-                            &args,
-                        )?;
+                    {
+                        let vec_key = format!("{prefix}.{}", $expand_vec_as);
+                        for (i, item) in self.$expand_vec_as_field.iter().enumerate() {
+                            let item_pfx = format!("{vec_key}[{i}].");
+                            let item_local: crate::span::SpanMap = args.spans
+                                .map(|m| {
+                                    m.iter()
+                                        .filter_map(|(k, v)| {
+                                            k.strip_prefix(&item_pfx)
+                                                .map(|suffix| (format!("{vec_key}.{suffix}"), *v))
+                                        })
+                                        .collect()
+                                })
+                                .unwrap_or_default();
+                            let item_args = crate::tree::TreeArgs {
+                                local_spans: if item_local.is_empty() { None } else { Some(item_local) },
+                                tree: args.tree,
+                                tvb: args.tvb,
+                                hf_map: args.hf_map,
+                                st_map: args.st_map,
+                                start: args.start,
+                                length: args.length,
+                                spans: args.spans,
+                            };
+                            item.add_to_tree(&vec_key, &item_args)?;
+                        }
                     }
                 )*
 
