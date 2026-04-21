@@ -2,7 +2,7 @@
 name = "epan-sys"
 version = { workspace = true }
 edition = "2021"
-license = "MIT OR Apache-2.0"
+license = "GPL-2.0-or-later"
 description = "FFI Bindings to Wireshark's epan module"
 links = "wireshark"
 keywords = ["wireshark", "ffi"]
