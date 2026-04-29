@@ -8,12 +8,13 @@ pub struct HeaderField {
 
 type Hfm = HashMap<String, HeaderField>;
 
-/// Map from header field keys to their display name and [`FieldKind`].
-///
-/// ## Examples
-/// - `zenoh.transport.frame` -> `("Frame", Branch)`
-/// - `zenoh.transport.frame.network.push.wire_expr` -> `("Wire Expr", Text)`
 pub struct HeaderFieldMap(Hfm);
+
+impl Default for HeaderFieldMap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl std::ops::Deref for HeaderFieldMap {
     type Target = Hfm;
@@ -57,8 +58,6 @@ impl HeaderFieldMap {
 pub enum FieldKind {
     Text,
     Branch,
-    // Number,
-    // Bytes,
 }
 
 pub trait Registration {
