@@ -1,3 +1,5 @@
+/// Generate `Registration` impl for an enum type.
+/// Each variant becomes a Branch node in the field map.
 macro_rules! impl_for_enum {
     (
         enum $enum_name:ident {
@@ -31,32 +33,11 @@ macro_rules! impl_for_enum {
                 names
             }
         }
-
-        impl AddToTree for $enum_name {
-            fn add_to_tree(&self, prefix: &str, args: &TreeArgs) -> Result<()> {
-                match self {
-                    $(
-                        Self::$variant_name(body) => {
-                            let variant_prefix = format!("{prefix}.{}", stringify!{$variant_name}.to_case(Case::Snake));
-                            body.add_to_tree(
-                                &variant_prefix,
-                                &args.make_subtree(
-                                    &variant_prefix,
-                                    &format!("{} ({})",
-                                    // Map "TransportBody" to "Transport", etc.
-                                    stringify!{$enum_name}.trim_end_matches("Body"),
-                                    stringify!{$variant_name})
-                                )?
-                            )?;
-                        }
-                    )*
-                }
-                Ok(())
-            }
-        }
     };
 }
 
+/// Generate `Registration` impl for a struct type.
+/// Plain fields become Text nodes; expand_as/expand/expand_vec_as produce subtrees.
 macro_rules! impl_for_struct {
     (
         struct $struct_name:ident {
@@ -150,54 +131,6 @@ macro_rules! impl_for_struct {
                 )*
 
                 names
-            }
-        }
-
-        impl AddToTree for $struct_name {
-            #![allow(unused)]
-            fn add_to_tree(&self, prefix: &str, args: &TreeArgs) -> Result<()> {
-                $(
-                    let hf_index = args.get_hf(&format!("{prefix}.{}", stringify!{$field_name}))?;
-                    unsafe {
-                        let field_name_c_str = std::ffi::CString::new(format!("{:?}", self.$field_name)).unwrap();
-                        // The codec doesn't expose per-field byte offsets, so we prevent wireshark
-                        // from displaying it by setting length to 0.
-                        epan_sys::proto_tree_add_string(
-                            args.tree,
-                            hf_index,
-                            args.tvb,
-                            args.start as _,
-                            0,
-                            field_name_c_str.as_ptr(),
-                        );
-                    }
-                )*
-
-                // HACK(fuzzypixelz): recursively created trees will have an incorrect length. Only
-                // the Transport layer has an accurate length.
-                let args = $crate::tree::TreeArgs { length: 0, ..*args };
-
-                $(
-                    for item in &self.$expand_vec_as_field {
-                        item.add_to_tree(
-                            &format!("{prefix}.{}", $expand_vec_as),
-                            &args,
-                        )?;
-                    }
-                )*
-
-                $(
-                    self.$expand_as_field.add_to_tree(
-                        &format!("{prefix}.{}", $expand_as),
-                        &args,
-                    )?;
-                )*
-
-                $(
-                    self.$expand_field.add_to_tree(prefix, &args)?;
-                )*
-
-                Ok(())
             }
         }
     };
