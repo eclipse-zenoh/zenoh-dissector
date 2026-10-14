@@ -1,22 +1,22 @@
 [package]
-name = "zenoh-dissector"
+name = "zenoh-codec-ffi"
 version = { workspace = true }
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 anyhow = { workspace = true }
 convert_case = { workspace = true }
-env_logger = { workspace = true }
-epan-sys = { workspace = true }
+lz4_flex = { workspace = true }
 zenoh-buffers = { workspace = true }
 zenoh-codec = { workspace = true }
 zenoh-protocol = { workspace = true }
 zenoh-transport = { workspace = true }
 
-[build-dependencies]
-cargo_metadata = "0.18"
-
-[lib]
-crate-type = ["cdylib"]
+[dev-dependencies]
+lz4_flex = { workspace = true }
+zenoh-buffers = { workspace = true }
+zenoh-codec = { workspace = true }
+zenoh-protocol = { workspace = true }
