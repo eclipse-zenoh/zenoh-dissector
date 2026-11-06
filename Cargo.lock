@@ -662,7 +662,7 @@ dependencies = [
 
 [[package]]
 name = "epan-sys"
-version = "1.10.2"
+version = "1.10.2-3-g64c27db"
 dependencies = [
  "anyhow",
  "bindgen",
@@ -3738,7 +3738,7 @@ dependencies = [
 
 [[package]]
 name = "zenoh-dissector"
-version = "1.10.2"
+version = "1.10.2-3-g64c27db"
 dependencies = [
  "anyhow",
  "cargo_metadata",
